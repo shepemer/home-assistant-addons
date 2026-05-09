@@ -1,0 +1,33 @@
+name: Codex Terminal
+description: "Terminal interface for the OpenAI Codex CLI, with Home Assistant MCP integration"
+version: "1.0.0"
+slug: codex_terminal
+url: https://github.com/shepemer/home-assistant-addons/tree/main/codex-terminal
+image: ghcr.io/shepemer/codex-terminal
+init: false
+arch:
+  - aarch64
+  - amd64
+homeassistant_api: true
+hassio_api: true
+hassio_role: manager
+auth_api: true
+ingress: true
+ingress_port: 7681
+panel_icon: mdi:robot
+panel_title: Codex Terminal
+map:
+  - type: homeassistant_config
+    read_only: false
+    path: /config
+  - type: addons
+    read_only: false
+    path: /addons
+  - type: share
+    read_only: false
+options:
+  auto_launch: true
+  enable_ha_mcp: true
+schema:
+  auto_launch: bool
+  enable_ha_mcp: bool
