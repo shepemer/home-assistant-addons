@@ -2,6 +2,8 @@
 
 HomeScope is a Home Assistant add-on for exploring time-series data stored in InfluxDB 1.x. It is built for dense signal analysis: searchable entities, draggable chart panes, dual axes, cursor readouts, zooming, panning, markers, A/B measurements, state transition overlays, and browser-local saved workspaces.
 
+![HomeScope signal analysis workbench](assets/homescope-screenshot.jpg)
+
 ## Requirements
 
 - Home Assistant with add-on support.

@@ -1,6 +1,6 @@
 name: HomeScope
 description: "Interactive time-series visualization for InfluxDB data"
-version: "1.0.0"
+version: "1.0.1"
 slug: homescope
 image: ghcr.io/shepemer/homescope
 init: false
