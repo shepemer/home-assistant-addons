@@ -1,10 +1,10 @@
 ---
-name: Release
+name: Release HomeScope
 
 on:
   push:
     tags:
-      - v*.*.*
+      - homescope-v*.*.*
   workflow_dispatch:
     inputs:
       version:
@@ -14,7 +14,7 @@ on:
 
 env:
   ARCHITECTURES: '["amd64", "aarch64"]'
-  IMAGE_NAME: codex-terminal
+  IMAGE_NAME: homescope
   REGISTRY_PREFIX: ghcr.io/${{ github.repository_owner }}
 
 permissions:
@@ -43,12 +43,21 @@ jobs:
           if [[ -n "${INPUT_VERSION}" ]]; then
             version="${INPUT_VERSION#v}"
           else
-            version="${REF_NAME#v}"
+            version="${REF_NAME#homescope-v}"
           fi
 
-          config_version="$(sed -n 's/^version: "\([^"]*\)"/\1/p' codex-terminal/config.yaml)"
+          config_version="$(sed -n 's/^version: "\([^"]*\)"/\1/p' homescope/config.yaml)"
+          package_version="$(
+            node -e "console.log(require('./homescope/package.json').version)"
+          )"
+
           if [[ "${config_version}" != "${version}" ]]; then
             echo "::error::config.yaml version ${config_version} does not match release version ${version}"
+            exit 1
+          fi
+
+          if [[ "${package_version}" != "${version}" ]]; then
+            echo "::error::package.json version ${package_version} does not match release version ${version}"
             exit 1
           fi
 
@@ -78,7 +87,7 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
           container-registry-password: ${{ secrets.GITHUB_TOKEN }}
-          context: ./codex-terminal
+          context: ./homescope
           image: ${{ matrix.image }}
           image-tags: |
             ${{ needs.init.outputs.version }}

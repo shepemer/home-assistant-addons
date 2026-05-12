@@ -1,0 +1,27 @@
+[
+  {
+    "id": "power_grid",
+    "name": "Grid Power",
+    "unit": "W",
+    "group": "Energy"
+  },
+  {
+    "id": "solar_power",
+    "name": "Solar Power",
+    "unit": "W",
+    "group": "Energy"
+  },
+  {
+    "id": "battery_soc",
+    "name": "Battery State of Charge",
+    "unit": "%",
+    "group": "Battery"
+  },
+  {
+    "id": "home_load",
+    "name": "Home Load",
+    "unit": "W",
+    "group": "Energy"
+  }
+]
+

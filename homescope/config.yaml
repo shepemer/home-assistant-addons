@@ -1,0 +1,28 @@
+name: HomeScope
+description: "Interactive time-series visualization for InfluxDB data"
+version: "1.0.0"
+slug: homescope
+image: ghcr.io/shepemer/homescope
+init: false
+arch:
+  - aarch64
+  - amd64
+ingress: true
+panel_icon: mdi:home-analytics
+panel_title: HomeScope
+map:
+  - type: share
+    read_only: false
+  - type: homeassistant_config
+    read_only: true
+    path: /config
+options:
+  influx_url: "http://a0d7b954-influxdb:8086"
+  influx_database: "homeassistant"
+  influx_username: ""
+  influx_password: ""
+schema:
+  influx_url: str
+  influx_database: str
+  influx_username: str?
+  influx_password: password?

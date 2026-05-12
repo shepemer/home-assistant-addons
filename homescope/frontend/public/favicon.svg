@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="#0F1722"/>
+  <g transform="translate(0 -29)">
+    <path
+      d="M116 276L256 154L396 276M138 264V374C138 395 155 412 176 412H336C357 412 374 395 374 374V264"
+      stroke="#E8F0FF"
+      stroke-width="36"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M124 320H196L219 286L252 352L294 248L322 320H388"
+      stroke="#2FE6C8"
+      stroke-width="28"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path d="M124 320H171" stroke="#42A5FF" stroke-width="28" stroke-linecap="round"/>
+    <path
+      d="M294 248L322 320H388"
+      stroke="#42A5FF"
+      stroke-width="28"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      opacity="0.92"
+    />
+    <circle cx="388" cy="320" r="17" fill="#2FE6C8"/>
+  </g>
+</svg>
