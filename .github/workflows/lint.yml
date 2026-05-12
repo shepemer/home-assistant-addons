@@ -13,8 +13,14 @@ permissions:
 
 jobs:
   addon:
-    name: Add-on configuration
+    name: Add-on configuration (${{ matrix.addon }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        addon:
+          - codex-terminal
+          - homescope
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -22,7 +28,7 @@ jobs:
       - name: Run Home Assistant add-on linter
         uses: frenck/action-addon-linter@v2
         with:
-          path: ./codex-terminal
+          path: ./${{ matrix.addon }}
 
   shell:
     name: Shell
@@ -37,7 +43,7 @@ jobs:
           sudo apt-get install -y shellcheck
 
       - name: Run ShellCheck
-        run: shellcheck -s bash -e SC1008 codex-terminal/run.sh
+        run: shellcheck -s bash -e SC1008 codex-terminal/run.sh homescope/run.sh
 
   yaml:
     name: YAML

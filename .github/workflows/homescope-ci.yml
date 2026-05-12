@@ -1,0 +1,51 @@
+---
+name: HomeScope CI
+
+on:
+  pull_request:
+    paths:
+      - homescope/**
+      - .github/workflows/homescope-ci.yml
+  push:
+    branches:
+      - main
+    paths:
+      - homescope/**
+      - .github/workflows/homescope-ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./homescope
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: homescope/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run browser tests
+        run: npm run test:e2e
+
+      - name: Build app
+        run: npm run build
