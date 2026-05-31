@@ -22,6 +22,65 @@ Default: `true`
 
 When enabled, startup attempts to configure a Codex MCP server named `home_assistant` using the Supervisor token and `ha-mcp`. If the token, Home Assistant API, `uvx`, or Codex CLI is unavailable, startup logs a warning and continues without MCP.
 
+### `enable_ssh`
+
+Default: `false`
+
+When enabled, the add-on starts an SSH server inside the Codex Terminal container on container port `2222`. SSH is key-only and logs in as `root`, matching the existing Codex runtime and mount permissions. You must also configure a host port in the Home Assistant network settings for `2222/tcp`.
+
+SSH access can operate on writable `/config`, `/addons`, and `/share`. Expose it only on a trusted LAN, VPN, or Tailscale path. Do not forward it directly to the public internet.
+
+### `ssh_authorized_keys`
+
+Default: `[]`
+
+Public SSH keys allowed to log in when `enable_ssh` is enabled.
+
+Example:
+
+```yaml
+ssh_authorized_keys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... shep@mac-mini"
+```
+
+Generate a dedicated key on your Mac mini:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/ha_codex_terminal_ed25519 -C "codex-terminal"
+```
+
+Example SSH config on the Mac mini:
+
+```sshconfig
+Host ha-codex-terminal
+  HostName homeassistant.local
+  Port 2222
+  User root
+  IdentityFile ~/.ssh/ha_codex_terminal_ed25519
+```
+
+Verify the remote environment:
+
+```bash
+ssh ha-codex-terminal 'codex --version && codex mcp list'
+```
+
+### `enable_remote_control`
+
+Default: `false`
+
+When enabled, the add-on starts the experimental Codex remote-control daemon after Codex auth and MCP setup. The normal npm-installed Codex CLI is still used for the terminal and MCP setup, but remote-control requires the standalone Codex install managed by the Codex installer.
+
+If `/data/.codex/packages/standalone/current/codex` is missing, startup downloads and runs the official installer:
+
+```bash
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+```
+
+The standalone install is stored under `/data/.codex` and persists across add-on restarts. The add-on uses `codex app-server daemon bootstrap --remote-control` when the installed Codex version supports it, with a fallback to `codex remote-control start --json` for older versions. Both startup paths pass `managed_dir="/config"` so the remote session opens against the Home Assistant config workspace. If Codex is not authenticated yet, remote-control is skipped with a warning; run `codex login` from the web terminal, then restart the add-on.
+
+Remote-control is started from `/config`, and startup sets `managed_dir = "/config"` and marks `/config`, `/addons`, and `/share` as trusted Codex projects in `/data/.codex/config.toml`. This gives remote sessions the same Home Assistant filesystem context as the web terminal.
+
 ## Mounted Paths
 
 - `/config`: Home Assistant configuration, writable.
@@ -55,6 +114,14 @@ apk add --no-cache jq
 ### Codex does not auto-launch
 
 Check the add-on logs for npm lookup or install failures. If the Codex CLI is unavailable, the add-on still starts the web terminal so you can inspect the environment.
+
+### SSH does not start
+
+Confirm `enable_ssh` is enabled, at least one `ssh_authorized_keys` entry is configured, and `2222/tcp` is mapped to a host port in the add-on network settings.
+
+### Codex remote-control does not start
+
+Confirm Codex auth is configured with `codex login status` in the web terminal. If the standalone install fails, check the add-on logs for `codex install` output.
 
 ### Home Assistant MCP is unavailable
 

@@ -17,6 +17,8 @@ RUN apk add --no-cache \
     curl \
     nodejs \
     npm \
+    openssh-server \
+    procps \
     python3 \
     git \
     tmux \
