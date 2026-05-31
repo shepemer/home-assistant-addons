@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- Added Chromium, Chromedriver, and Selenium support for browser screenshot workflows inside the add-on container.
+
 ## 1.1.0
 
 - Added optional key-only SSH access to the Codex Terminal container for remote Codex workflows.
