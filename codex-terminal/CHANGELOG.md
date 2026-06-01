@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3
+
+- Documented SSH persistence behavior for Codex app SSH connections.
+
 ## 1.1.2
 
 - Added optional SSH username and password configuration while preserving authorized-key SSH.

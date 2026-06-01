@@ -6,6 +6,8 @@ Open the Codex Terminal add-on from the Home Assistant sidebar. The terminal sta
 
 Codex stores its data in `/data/.codex`, and `/root/.codex` is linked there so authentication persists across add-on restarts and upgrades.
 
+Normal add-on restarts preserve `/data/.codex`, including Codex auth, configuration, and recorded conversations. Uninstalling and reinstalling the add-on may remove add-on data unless you restore it from a Home Assistant backup.
+
 ## Options
 
 ### `auto_launch`
@@ -31,6 +33,8 @@ When enabled, the add-on starts an SSH server inside the Codex Terminal containe
 SSH access can operate on writable `/config`, `/addons`, and `/share`. Password SSH should only be exposed on a trusted LAN, VPN, or Tailscale path. Do not forward SSH directly to the public internet.
 
 SSH starts when at least one login method is configured: `ssh_password` or `ssh_authorized_keys`.
+
+Codex app SSH connections should use the default direct SSH shell. The add-on exports `HOME`, `CODEX_HOME`, `XDG_*`, `NPM_CONFIG_PREFIX`, and `PATH` through SSH so Codex sessions use persisted state in `/data/.codex`.
 
 ### `ssh_username`
 
@@ -151,7 +155,7 @@ Check the add-on logs for npm lookup or install failures. If the Codex CLI is un
 
 ### SSH does not start
 
-Confirm `enable_ssh` is enabled, at least one `ssh_authorized_keys` entry is configured, and `2222/tcp` is mapped to a host port in the add-on network settings.
+Confirm `enable_ssh` is enabled, at least one `ssh_password` or `ssh_authorized_keys` value is configured, and `2222/tcp` is mapped to a host port in the add-on network settings.
 
 ### Codex remote-control does not start
 
