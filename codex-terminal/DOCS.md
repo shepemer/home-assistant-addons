@@ -26,7 +26,7 @@ When enabled, startup attempts to configure a Codex MCP server named `home_assis
 
 Default: `false`
 
-When enabled, the add-on starts an SSH server inside the Codex Terminal container on container port `2222`. SSH can use authorized keys, a configured username/password, or both. Logins use the root-backed Codex runtime so mount permissions match the web terminal. You must also configure a host port in the Home Assistant network settings for `2222/tcp`.
+When enabled, the add-on starts an SSH server inside the Codex Terminal container on container port `2222`. SSH can use authorized keys, a configured username/password, or both. Logins use the root-backed Codex runtime so mount permissions match the web terminal. The Home Assistant network setting defaults the host port to `2222`, but you can change it if that port is already in use.
 
 SSH access can operate on writable `/config`, `/addons`, and `/share`. Password SSH should only be exposed on a trusted LAN, VPN, or Tailscale path. Do not forward SSH directly to the public internet.
 

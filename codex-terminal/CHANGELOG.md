@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.3
+
+- Defaulted the SSH host port to `2222` so enabling SSH works without extra network port entry.
+- Added Codex app icon assets for the add-on.
+
 ## 1.1.2
 
 - Added optional SSH username and password configuration while preserving authorized-key SSH.
