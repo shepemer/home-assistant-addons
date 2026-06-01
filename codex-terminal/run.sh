@@ -313,6 +313,10 @@ configure_ha_mcp() {
 configure_ssh() {
     local enable_ssh
     local ssh_keys
+    local ssh_username
+    local ssh_password
+    local password_authentication="no"
+    local permit_root_login="prohibit-password"
 
     enable_ssh="$(bashio::config 'enable_ssh' 'false')"
     [ "${enable_ssh}" = "true" ] || {
@@ -329,9 +333,17 @@ configure_ssh() {
         return 0
     }
 
+    ssh_username="$(bashio::config 'ssh_username' 'root')"
+    ssh_username="${ssh_username:-root}"
+    if ! printf '%s\n' "${ssh_username}" | grep -Eq '^[a-z_][a-z0-9_-]{0,31}$'; then
+        bashio::log.warning "SSH access is enabled but ssh_username is invalid"
+        return 0
+    fi
+
+    ssh_password="$(bashio::config 'ssh_password' '')"
     ssh_keys="$(bashio::config 'ssh_authorized_keys' '')"
-    if [ -z "${ssh_keys}" ]; then
-        bashio::log.warning "SSH access is enabled but no ssh_authorized_keys are configured"
+    if [ -z "${ssh_password}" ] && [ -z "${ssh_keys}" ]; then
+        bashio::log.warning "SSH access is enabled but no ssh_password or ssh_authorized_keys are configured"
         return 0
     fi
 
@@ -358,6 +370,36 @@ configure_ssh() {
     printf '%s\n' "${ssh_keys}" >"${SSH_AUTHORIZED_KEYS}"
     chmod 600 "${SSH_AUTHORIZED_KEYS}"
 
+    if [ "${ssh_username}" != "root" ]; then
+        if grep -qE "^${ssh_username}:" /etc/passwd; then
+            sed -i "s|^${ssh_username}:.*|${ssh_username}:x:0:0:root:/root:/bin/bash|" /etc/passwd
+        else
+            printf '%s:x:0:0:root:/root:/bin/bash\n' "${ssh_username}" >>/etc/passwd
+        fi
+
+        if [ -f /etc/shadow ]; then
+            if grep -qE "^${ssh_username}:" /etc/shadow; then
+                sed -i "s|^${ssh_username}:.*|${ssh_username}:!:19000:0:99999:7:::|" /etc/shadow
+            else
+                printf '%s:!:19000:0:99999:7:::\n' "${ssh_username}" >>/etc/shadow
+            fi
+        fi
+    fi
+
+    if [ -n "${ssh_password}" ]; then
+        require_command chpasswd || {
+            bashio::log.warning "chpasswd is required for SSH password access"
+            return 0
+        }
+        printf '%s:%s\n' "${ssh_username}" "${ssh_password}" | chpasswd >/tmp/codex-ssh-passwd.log 2>&1 || {
+            bashio::log.warning "Failed to configure SSH password"
+            log_tail /tmp/codex-ssh-passwd.log "chpasswd"
+            return 0
+        }
+        password_authentication="yes"
+        permit_root_login="yes"
+    fi
+
     cat >"${SSHD_CONFIG}" <<EOF
 Port 2222
 ListenAddress 0.0.0.0
@@ -365,9 +407,9 @@ Protocol 2
 HostKey ${SSH_DIR}/ssh_host_ed25519_key
 HostKey ${SSH_DIR}/ssh_host_ecdsa_key
 AuthorizedKeysFile ${SSH_AUTHORIZED_KEYS}
-PermitRootLogin prohibit-password
+PermitRootLogin ${permit_root_login}
 PubkeyAuthentication yes
-PasswordAuthentication no
+PasswordAuthentication ${password_authentication}
 KbdInteractiveAuthentication no
 ChallengeResponseAuthentication no
 PermitEmptyPasswords no

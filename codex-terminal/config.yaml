@@ -1,6 +1,6 @@
 name: Codex Terminal
 description: "Terminal interface for the OpenAI Codex CLI, with Home Assistant MCP integration"
-version: "1.1.1"
+version: "1.1.2"
 slug: codex_terminal
 url: https://github.com/shepemer/home-assistant-addons/tree/main/codex-terminal
 image: ghcr.io/shepemer/codex-terminal
@@ -33,12 +33,16 @@ options:
   auto_launch: true
   enable_ha_mcp: true
   enable_ssh: false
+  ssh_username: root
+  ssh_password: ""
   ssh_authorized_keys: []
   enable_remote_control: false
 schema:
   auto_launch: bool
   enable_ha_mcp: bool
   enable_ssh: bool
+  ssh_username: str?
+  ssh_password: password?
   ssh_authorized_keys:
     - str
   enable_remote_control: bool

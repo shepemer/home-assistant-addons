@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Added optional SSH username and password configuration while preserving authorized-key SSH.
+
 ## 1.1.1
 
 - Added Chromium, Chromedriver, and Selenium support for browser screenshot workflows inside the add-on container.

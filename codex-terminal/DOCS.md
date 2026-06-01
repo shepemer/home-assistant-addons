@@ -26,19 +26,53 @@ When enabled, startup attempts to configure a Codex MCP server named `home_assis
 
 Default: `false`
 
-When enabled, the add-on starts an SSH server inside the Codex Terminal container on container port `2222`. SSH is key-only and logs in as `root`, matching the existing Codex runtime and mount permissions. You must also configure a host port in the Home Assistant network settings for `2222/tcp`.
+When enabled, the add-on starts an SSH server inside the Codex Terminal container on container port `2222`. SSH can use authorized keys, a configured username/password, or both. Logins use the root-backed Codex runtime so mount permissions match the web terminal. You must also configure a host port in the Home Assistant network settings for `2222/tcp`.
 
-SSH access can operate on writable `/config`, `/addons`, and `/share`. Expose it only on a trusted LAN, VPN, or Tailscale path. Do not forward it directly to the public internet.
+SSH access can operate on writable `/config`, `/addons`, and `/share`. Password SSH should only be exposed on a trusted LAN, VPN, or Tailscale path. Do not forward SSH directly to the public internet.
+
+SSH starts when at least one login method is configured: `ssh_password` or `ssh_authorized_keys`.
+
+### `ssh_username`
+
+Default: `root`
+
+Username accepted for SSH password access. Custom usernames are mapped into the same root-backed Codex runtime so mounted paths, Codex configuration, and Home Assistant permissions match the web terminal.
+
+### `ssh_password`
+
+Default: empty
+
+Password allowed for SSH login when `enable_ssh` is enabled. Leave this empty to keep password authentication disabled and use key-only SSH.
+
+Password-only example:
+
+```yaml
+enable_ssh: true
+ssh_username: codex
+ssh_password: "use-a-long-unique-password"
+ssh_authorized_keys: []
+```
 
 ### `ssh_authorized_keys`
 
 Default: `[]`
 
-Public SSH keys allowed to log in when `enable_ssh` is enabled.
+Public SSH keys allowed to log in when `enable_ssh` is enabled. Keys can be used by themselves or together with `ssh_password`.
 
 Example:
 
 ```yaml
+enable_ssh: true
+ssh_authorized_keys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... codex@workstation"
+```
+
+Key plus password example:
+
+```yaml
+enable_ssh: true
+ssh_username: codex
+ssh_password: "use-a-long-unique-password"
 ssh_authorized_keys:
   - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... shep@mac-mini"
 ```
