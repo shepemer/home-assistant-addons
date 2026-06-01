@@ -17,12 +17,19 @@ RUN apk add --no-cache \
     curl \
     nodejs \
     npm \
+    openssh-server \
+    procps \
     python3 \
+    py3-pip \
     git \
     tmux \
     ttyd \
     uv \
-    ripgrep
+    ripgrep \
+    chromium \
+    chromium-chromedriver
+
+RUN python3 -m pip install --break-system-packages --no-cache-dir selenium
 
 ARG CODEX_VERSION=latest
 
