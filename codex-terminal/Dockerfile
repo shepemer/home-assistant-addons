@@ -31,6 +31,11 @@ RUN apk add --no-cache \
 
 RUN python3 -m pip install --break-system-packages --no-cache-dir selenium
 
+RUN curl -fsSL \
+        "https://github.com/home-assistant/cli/releases/latest/download/ha_${BUILD_ARCH}" \
+        -o /usr/local/bin/ha-cli && \
+    chmod +x /usr/local/bin/ha-cli
+
 ARG CODEX_VERSION=latest
 
 RUN npm install -g @openai/codex@${CODEX_VERSION} && \
@@ -44,6 +49,7 @@ ENV NPM_CONFIG_PREFIX=/data/.npm-global
 ENV PATH=/data/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 COPY run.sh /run.sh
-RUN chmod +x /run.sh
+COPY ha /usr/local/bin/ha
+RUN chmod +x /run.sh /usr/local/bin/ha
 
 CMD ["/run.sh"]

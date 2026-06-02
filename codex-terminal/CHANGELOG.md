@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.4
+
+- Added the Home Assistant `ha` CLI for agents and terminal users inside the container.
+
 ## 1.1.3
 
 - Defaulted the SSH host port to `2222` so enabling SSH works without extra network port entry.

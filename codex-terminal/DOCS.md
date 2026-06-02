@@ -126,6 +126,18 @@ Remote-control is started from `/config`, and startup sets `managed_dir = "/conf
 
 The image includes `@openai/codex`. On startup, the add-on checks the npm `latest` dist-tag and installs that version into `/data/.npm-global` when needed. Network lookup and install failures are bounded and non-fatal; the add-on falls back to the best available installed CLI.
 
+## Home Assistant CLI
+
+The image includes the official Home Assistant `ha` CLI. The add-on wrapper configures the Supervisor endpoint and token automatically, so agents and terminal users can inspect or manage Home Assistant from inside the container.
+
+Examples:
+
+```bash
+ha core info
+ha core check
+ha supervisor info
+```
+
 ## Authentication
 
 If `/data/.codex/auth.json` is missing, Codex will prompt for authentication in the terminal. After authentication, the file persists in add-on data and will be reused on later starts.
