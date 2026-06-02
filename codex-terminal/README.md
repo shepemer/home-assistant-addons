@@ -8,6 +8,7 @@ Terminal interface for the OpenAI Codex CLI, packaged as a Home Assistant add-on
 - Codex CLI installed in the image and updated on startup when a newer `latest` release is available.
 - Persistent Codex auth and configuration in `/data/.codex`.
 - Writable access to `/config`, `/addons`, and `/share`.
+- Home Assistant `ha` CLI available inside the container using the Supervisor token.
 - Optional Home Assistant MCP server configuration using the Supervisor token.
 - Optional SSH access for Codex remote SSH workflows from another machine.
 - Optional experimental Codex remote-control daemon support.

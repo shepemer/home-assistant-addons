@@ -31,6 +31,7 @@ export PATH="${IMAGE_FIRST_PATH}"
 redact_log() {
     sed -E \
         -e 's/(HOMEASSISTANT_TOKEN[=[:space:]:"]+)[^"[:space:]]+/\1<redacted>/g' \
+        -e 's/(SUPERVISOR_API_TOKEN[=[:space:]:"]+)[^"[:space:]]+/\1<redacted>/g' \
         -e 's/(SUPERVISOR_TOKEN[=[:space:]:"]+)[^"[:space:]]+/\1<redacted>/g' \
         -e 's/(Authorization:[[:space:]]*Bearer )[A-Za-z0-9._-]+/\1<redacted>/Ig' \
         -e 's/(Bearer )[A-Za-z0-9._-]+/\1<redacted>/g'

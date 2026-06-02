@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -e
+
+if [ -z "${SUPERVISOR_ENDPOINT:-}" ]; then
+    export SUPERVISOR_ENDPOINT="http://supervisor"
+fi
+
+if [ -z "${SUPERVISOR_API_TOKEN:-}" ]; then
+    if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
+        export SUPERVISOR_API_TOKEN="${SUPERVISOR_TOKEN}"
+    else
+        for token_file in \
+            /run/s6/container_environment/SUPERVISOR_TOKEN \
+            /var/run/s6/container_environment/SUPERVISOR_TOKEN; do
+            if [ -s "${token_file}" ]; then
+                SUPERVISOR_API_TOKEN="$(cat "${token_file}")"
+                export SUPERVISOR_API_TOKEN
+                break
+            fi
+        done
+    fi
+fi
+
+exec /usr/local/bin/ha-cli "$@"
