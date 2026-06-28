@@ -3,6 +3,7 @@
 ## 1.1.5
 
 - Kept SSH sessions on the same startup-selected Codex CLI as the web terminal after automatic updates.
+- Made the README call out manual add-on restart as the fix for Codex Desktop SSH version mismatch warnings.
 
 ## 1.1.4
 

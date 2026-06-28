@@ -126,6 +126,10 @@ Remote-control is started from `/config`, and startup sets `managed_dir = "/conf
 
 The image includes `@openai/codex`. On startup, the add-on checks the npm `latest` dist-tag and installs that version into `/data/.npm-global` when needed. Network lookup and install failures are bounded and non-fatal; the add-on falls back to the best available installed CLI.
 
+The selected Codex runtime is written to `/run/codex-terminal/codex-env.sh` and sourced by SSH login shells, so SSH sessions and the web terminal use the same Codex CLI after each add-on restart.
+
+If Codex Desktop reports a Codex version mismatch when connecting over SSH, a manual add-on/container restart may be needed. Restart the Codex Terminal add-on from Home Assistant and reconnect. Startup is where the add-on updates `@openai/codex` and refreshes the SSH runtime environment.
+
 ## Home Assistant CLI
 
 The image includes the official Home Assistant `ha` CLI. The add-on wrapper configures the Supervisor endpoint and token automatically, so agents and terminal users can inspect or manage Home Assistant from inside the container.
@@ -164,6 +168,10 @@ Check the add-on logs for npm lookup or install failures. If the Codex CLI is un
 ### SSH does not start
 
 Confirm `enable_ssh` is enabled, at least one `ssh_authorized_keys` entry is configured, and `2222/tcp` is mapped to a host port in the add-on network settings.
+
+### Codex Desktop reports a version mismatch over SSH
+
+A manual add-on/container restart may be needed. Restart the Codex Terminal add-on from Home Assistant, then reconnect. The add-on updates the Codex CLI and rewrites the SSH runtime environment during startup.
 
 ### Codex remote-control does not start
 
