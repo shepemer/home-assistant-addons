@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly CODEX_ENV_FILE="/run/codex-terminal/codex-env.sh"
+
+if [ -r "${CODEX_ENV_FILE}" ]; then
+    # shellcheck source=/dev/null
+    . "${CODEX_ENV_FILE}"
+else
+    export HOME="${HOME:-/root}"
+    export CODEX_HOME="${CODEX_HOME:-/data/.codex}"
+    export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-/data/.config}"
+    export XDG_DATA_HOME="${XDG_DATA_HOME:-/data/.local/share}"
+    export XDG_CACHE_HOME="${XDG_CACHE_HOME:-/data/.cache}"
+    export NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-/data/.npm-global}"
+    export PATH="${NPM_CONFIG_PREFIX}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+fi
+
+export HOME="${HOME:-/root}"
+
+if [ "$#" -eq 0 ]; then
+    exec /bin/bash -l
+fi
+
+exec /bin/bash "$@"

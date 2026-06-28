@@ -1,35 +1,28 @@
 # Home Assistant Add-ons
 
-Custom Home Assistant add-ons.
+Custom Home Assistant add-ons for Codex Terminal and HomeScope.
 
-## Installation
+## AI-Generated Code Disclaimer
 
-1. In Home Assistant, go to **Settings** -> **Add-ons** -> **Add-on Store**.
-2. Open the menu in the top right and choose **Repositories**.
-3. Add this repository URL.
-4. Refresh the add-on store.
-5. Select the add-on you want to install.
+The code and documentation in this repository were generated with AI assistance. Review the implementation, add-on configuration, and security settings before using them on a real Home Assistant system.
 
-## Add-ons
+## Codex Version Mismatch? Restart The Add-On/Container
 
-### Codex Terminal
+If Codex Desktop reports a Codex version mismatch when connecting to Codex Terminal over SSH, a manual add-on/container restart may be needed. Restart the **Codex Terminal** add-on from Home Assistant.
 
-Terminal interface for the OpenAI Codex CLI with Home Assistant MCP integration.
+The add-on updates `@openai/codex` on startup, then makes the selected runtime available to both the web terminal and SSH sessions. A restart is the expected fix when Codex detects an older SSH-side CLI.
 
-- Opens as a Home Assistant ingress panel.
-- Persists Codex authentication and configuration in the add-on data directory.
-- Mounts `/config`, `/addons`, and `/share` so Codex can work with Home Assistant files.
-- Optionally configures the Home Assistant MCP server using the Supervisor token.
+## Quick Install
 
-See [Codex Terminal documentation](codex-terminal/DOCS.md) for configuration and troubleshooting.
+Add this repository URL in Home Assistant under **Settings** -> **Add-ons** -> **Add-on Store** -> **Repositories**, then install the add-on you want.
 
-### HomeScope
+## Add-Ons
 
-Interactive signal workbench for Home Assistant data stored in InfluxDB 1.x.
+- **Codex Terminal**: Codex CLI in a Home Assistant ingress terminal, with optional SSH, Home Assistant MCP, and `/config`, `/addons`, `/share` access.
+- **HomeScope**: Interactive signal workbench for Home Assistant data stored in InfluxDB 1.x.
 
-- Opens as a Home Assistant ingress panel.
-- Connects to an InfluxDB 1.x database with server-side credentials.
-- Provides a dense signal catalog, chart panes, dual axes, zoom/pan, keyboard shortcuts, A/B measurements, markers, event overlays, saved workspaces, and local display styling.
-- Keeps InfluxDB credentials in add-on options. Password values are never returned to the browser.
+## Docs
 
-See [HomeScope documentation](homescope/README.md) for installation and configuration.
+- [Repository docs](docs.md)
+- [Codex Terminal docs](codex-terminal/DOCS.md)
+- [HomeScope docs](homescope/README.md)
