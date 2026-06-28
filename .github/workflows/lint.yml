@@ -43,7 +43,9 @@ jobs:
           sudo apt-get install -y shellcheck
 
       - name: Run ShellCheck
-        run: shellcheck -s bash -e SC1008 codex-terminal/run.sh homescope/run.sh
+        run: |
+          shellcheck -s bash -e SC1008 codex-terminal/run.sh codex-terminal/codex-terminal-shell homescope/run.sh
+          shellcheck -s sh codex-terminal/codex-terminal-profile.sh
 
   yaml:
     name: YAML

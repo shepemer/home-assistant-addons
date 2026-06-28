@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.5
+
+- Kept SSH sessions on the same startup-selected Codex CLI as the web terminal after automatic updates.
+
 ## 1.1.4
 
 - Added the Home Assistant `ha` CLI for agents and terminal users inside the container.

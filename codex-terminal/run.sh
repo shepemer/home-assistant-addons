@@ -13,6 +13,9 @@ readonly NPM_INSTALL_TIMEOUT_SECONDS="${NPM_INSTALL_TIMEOUT_SECONDS:-300}"
 readonly CODEX_INSTALL_TIMEOUT_SECONDS="${CODEX_INSTALL_TIMEOUT_SECONDS:-300}"
 readonly STANDALONE_CODEX_BIN="${CODEX_HOME_DIR}/packages/standalone/current/codex"
 readonly CODEX_CONFIG_FILE="${CODEX_HOME_DIR}/config.toml"
+readonly CODEX_RUNTIME_DIR="/run/codex-terminal"
+readonly CODEX_ENV_FILE="${CODEX_RUNTIME_DIR}/codex-env.sh"
+readonly CODEX_LOGIN_SHELL="/usr/local/bin/codex-terminal-shell"
 readonly SSH_DIR="/data/ssh"
 readonly SSHD_CONFIG="${SSH_DIR}/sshd_config"
 readonly SSH_AUTHORIZED_KEYS="${SSH_DIR}/authorized_keys"
@@ -75,6 +78,12 @@ run_with_timeout() {
     else
         "$@"
     fi
+}
+
+shell_quote() {
+    local value="$1"
+
+    printf "'%s'" "$(printf '%s' "${value}" | sed "s/'/'\\\\''/g")"
 }
 
 load_supervisor_token() {
@@ -236,6 +245,27 @@ select_codex() {
     fi
 }
 
+write_codex_runtime_env() {
+    mkdir -p "${CODEX_RUNTIME_DIR}"
+
+    {
+        printf '# shellcheck shell=sh\n'
+        printf 'export HOME=%s\n' "$(shell_quote "${HOME}")"
+        printf 'export CODEX_HOME=%s\n' "$(shell_quote "${CODEX_HOME}")"
+        printf 'export XDG_CONFIG_HOME=%s\n' "$(shell_quote "${XDG_CONFIG_HOME}")"
+        printf 'export XDG_DATA_HOME=%s\n' "$(shell_quote "${XDG_DATA_HOME}")"
+        printf 'export XDG_CACHE_HOME=%s\n' "$(shell_quote "${XDG_CACHE_HOME}")"
+        printf 'export NPM_CONFIG_PREFIX=%s\n' "$(shell_quote "${NPM_CONFIG_PREFIX}")"
+        printf 'export PATH=%s\n' "$(shell_quote "${CODEX_RUNTIME_PATH}")"
+        if [ -n "${CODEX_BIN:-}" ]; then
+            printf 'export CODEX_BIN=%s\n' "$(shell_quote "${CODEX_BIN}")"
+        fi
+    } >"${CODEX_ENV_FILE}"
+
+    chmod 0644 "${CODEX_ENV_FILE}"
+    bashio::log.info "Codex runtime environment written to ${CODEX_ENV_FILE}"
+}
+
 check_bubblewrap() {
     if ! command -v bwrap >/dev/null 2>&1; then
         bashio::log.warning "bubblewrap/bwrap is not available; Codex will use sandbox bypass"
@@ -316,6 +346,7 @@ configure_ssh() {
     local ssh_keys
     local ssh_username
     local ssh_password
+    local ssh_login_shell="/bin/bash"
     local password_authentication="no"
     local permit_root_login="prohibit-password"
 
@@ -339,6 +370,10 @@ configure_ssh() {
     if ! printf '%s\n' "${ssh_username}" | grep -Eq '^[a-z_][a-z0-9_-]{0,31}$'; then
         bashio::log.warning "SSH access is enabled but ssh_username is invalid"
         return 0
+    fi
+
+    if [ -x "${CODEX_LOGIN_SHELL}" ]; then
+        ssh_login_shell="${CODEX_LOGIN_SHELL}"
     fi
 
     ssh_password="$(bashio::config 'ssh_password' '')"
@@ -371,11 +406,15 @@ configure_ssh() {
     printf '%s\n' "${ssh_keys}" >"${SSH_AUTHORIZED_KEYS}"
     chmod 600 "${SSH_AUTHORIZED_KEYS}"
 
+    if grep -qE '^root:' /etc/passwd; then
+        sed -i "s|^root:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:.*|root:x:0:0:root:${HOME}:${ssh_login_shell}|" /etc/passwd
+    fi
+
     if [ "${ssh_username}" != "root" ]; then
         if grep -qE "^${ssh_username}:" /etc/passwd; then
-            sed -i "s|^${ssh_username}:.*|${ssh_username}:x:0:0:root:/root:/bin/bash|" /etc/passwd
+            sed -i "s|^${ssh_username}:.*|${ssh_username}:x:0:0:root:${HOME}:${ssh_login_shell}|" /etc/passwd
         else
-            printf '%s:x:0:0:root:/root:/bin/bash\n' "${ssh_username}" >>/etc/passwd
+            printf '%s:x:0:0:root:%s:%s\n' "${ssh_username}" "${HOME}" "${ssh_login_shell}" >>/etc/passwd
         fi
 
         if [ -f /etc/shadow ]; then
@@ -601,6 +640,7 @@ bashio::log.info "Starting Codex Terminal"
 setup_paths
 configure_codex_projects
 select_codex
+write_codex_runtime_env
 check_bubblewrap
 if ! configure_ha_mcp; then
     bashio::log.warning "Home Assistant MCP integration failed unexpectedly; continuing without MCP"

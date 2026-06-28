@@ -41,15 +41,19 @@ ARG CODEX_VERSION=latest
 RUN npm install -g @openai/codex@${CODEX_VERSION} && \
     npm cache clean --force
 
-RUN mkdir -p /config /root && \
+RUN mkdir -p /config /root /etc/profile.d && \
     ln -sf /usr/bin/bwrap /usr/local/bin/bwrap && \
     ln -sf /usr/bin/bwrap /usr/local/bin/bubblewrap
 
 ENV NPM_CONFIG_PREFIX=/data/.npm-global
 ENV PATH=/data/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
+COPY codex-terminal-shell /usr/local/bin/codex-terminal-shell
+COPY codex-terminal-profile.sh /etc/profile.d/codex-terminal.sh
 COPY run.sh /run.sh
 COPY ha /usr/local/bin/ha
-RUN chmod +x /run.sh /usr/local/bin/ha
+RUN chmod +x /run.sh /usr/local/bin/ha /usr/local/bin/codex-terminal-shell && \
+    chmod 0644 /etc/profile.d/codex-terminal.sh && \
+    printf '%s\n' /usr/local/bin/codex-terminal-shell >> /etc/shells
 
 CMD ["/run.sh"]
