@@ -182,6 +182,32 @@ describe("InfluxDB query helpers", () => {
     ]);
   });
 
+  it("returns the complete catalog when the all limit is requested", async () => {
+    mockInflux((query) => {
+      if (query === "SHOW MEASUREMENTS") {
+        return [["state"]];
+      }
+      if (query.includes("SHOW SERIES FROM")) {
+        return Array.from({ length: 600 }, (_value, index) => [
+          `state,domain=sensor,entity_id=generated_${index}`
+        ]);
+      }
+      return undefined;
+    });
+
+    const signals = await discoverSignals(
+      {
+        ...config,
+        username: "complete-catalog-test"
+      },
+      {
+        limit: "all"
+      }
+    );
+
+    expect(signals).toHaveLength(600);
+  });
+
   it("classifies invalid InfluxDB URLs before querying", async () => {
     const invalidConfig: RuntimeConfig = {
       ...config,
