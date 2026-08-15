@@ -79,6 +79,7 @@ type CatalogCache = {
 
 let catalogCache: CatalogCache | null = null;
 const catalogTtlMs = 60_000;
+const catalogSeriesPageSize = 10_000;
 const queryConcurrency = 4;
 
 export class InfluxRequestError extends Error {
@@ -320,20 +321,30 @@ async function listMeasurements(config: RuntimeConfig) {
   return values.map((row) => String(row[0] ?? "")).filter(Boolean);
 }
 
+async function listMeasurementSignals(config: RuntimeConfig, measurement: string) {
+  const signals: Signal[] = [];
+
+  for (let offset = 0; ; offset += catalogSeriesPageSize) {
+    const payload = await queryInflux(
+      config,
+      `SHOW SERIES FROM ${quoteIdentifier(measurement)} LIMIT ${catalogSeriesPageSize} OFFSET ${offset}`
+    );
+    const values = payload.results?.[0]?.series?.flatMap((series) => series.values ?? []) ?? [];
+    signals.push(
+      ...values
+        .map((row) => signalFromSeriesKey(String(row[0] ?? "")))
+        .filter((signal): signal is Signal => Boolean(signal))
+    );
+
+    if (values.length < catalogSeriesPageSize) {
+      return signals;
+    }
+  }
+}
+
 async function buildCatalog(config: RuntimeConfig): Promise<Signal[]> {
   const measurements = await listMeasurements(config);
-  const batches = await Promise.all(
-    measurements.map(async (measurement) => {
-      const payload = await queryInflux(
-        config,
-        `SHOW SERIES FROM ${quoteIdentifier(measurement)} LIMIT 10000`
-      );
-      const values = payload.results?.[0]?.series?.flatMap((series) => series.values ?? []) ?? [];
-      return values
-        .map((row) => signalFromSeriesKey(String(row[0] ?? "")))
-        .filter((signal): signal is Signal => Boolean(signal));
-    })
-  );
+  const batches = await Promise.all(measurements.map((measurement) => listMeasurementSignals(config, measurement)));
   const seen = new Set<string>();
 
   return batches
@@ -377,11 +388,11 @@ async function getCatalog(config: RuntimeConfig) {
 
 export async function discoverSignals(
   config: RuntimeConfig,
-  options: { search?: string; measurement?: string; limit?: number }
+  options: { search?: string; measurement?: string; limit?: number | "all" }
 ): Promise<Signal[]> {
-  const requestedLimit = options.limit ?? 500;
-  const limit = Math.min(Math.max(requestedLimit, 1), 5000);
   const catalog = await getCatalog(config);
+  const requestedLimit = options.limit ?? 500;
+  const limit = requestedLimit === "all" ? catalog.length : Math.min(Math.max(requestedLimit, 1), 5000);
   const search = options.search?.trim() ?? "";
 
   return catalog

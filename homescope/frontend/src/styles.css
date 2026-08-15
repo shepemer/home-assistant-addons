@@ -385,6 +385,18 @@ input:focus-visible,
   background: #202938;
 }
 
+.signal-row.selected {
+  border-color: #5b7faa;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), rgba(32, 41, 56, 0.8));
+  color: #edf5ff;
+  box-shadow: inset 3px 0 0 #60a5fa;
+}
+
+.signal-row.selected:hover {
+  border-color: #7da2d0;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.28), rgba(37, 48, 65, 0.9));
+}
+
 .signal-row.dragging {
   border-color: #5b7faa;
   background: linear-gradient(90deg, rgba(59, 130, 246, 0.22), rgba(32, 41, 56, 0.86));

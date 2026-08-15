@@ -23,7 +23,7 @@ import {
 import "uplot/dist/uPlot.min.css";
 import {
   fetchConfig,
-  fetchSignals,
+  fetchSignalCatalog,
   querySignals,
   testConfig,
   type AppConfig,
@@ -43,6 +43,7 @@ import {
   type ScaleRange,
   type SignalViewConfig
 } from "./UPlotLane";
+import { matchesSignalSearch } from "./signalSearch";
 import "./styles.css";
 
 type Pane = {
@@ -771,19 +772,94 @@ function makePaneId() {
   return `pane-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function makePane(signalId: string, side: AxisSide): Pane {
-  return {
-    axes: {
-      left: side === "left" ? [signalId] : [],
-      right: side === "right" ? [signalId] : []
-    },
-    paneId: makePaneId()
-  };
-}
-
 function axisUnit(pane: Pane, side: AxisSide, signalById: Map<string, Signal>) {
   const firstSignalId = pane.axes[side][0];
   return firstSignalId ? signalById.get(firstSignalId)?.unit : undefined;
+}
+
+function appendSignalsToPane(
+  pane: Pane,
+  preferredSide: AxisSide,
+  signalIds: string[],
+  signalById: Map<string, Signal>,
+  allowAlternateSide = true
+) {
+  const nextPane: Pane = {
+    ...pane,
+    axes: {
+      left: [...pane.axes.left],
+      right: [...pane.axes.right]
+    }
+  };
+  const alternateSide: AxisSide = preferredSide === "left" ? "right" : "left";
+
+  for (const signalId of signalIds) {
+    const signal = signalById.get(signalId);
+    if (!signal) {
+      return null;
+    }
+
+    const preferredSignalIds = nextPane.axes[preferredSide];
+    const alternateSignalIds = nextPane.axes[alternateSide];
+    const preferredUnit = axisUnit(nextPane, preferredSide, signalById);
+    const alternateUnit = axisUnit(nextPane, alternateSide, signalById);
+
+    if (preferredSignalIds.length > 0 && preferredUnit === signal.unit) {
+      nextPane.axes[preferredSide].push(signalId);
+      continue;
+    }
+
+    if (allowAlternateSide && alternateSignalIds.length > 0 && alternateUnit === signal.unit) {
+      nextPane.axes[alternateSide].push(signalId);
+      continue;
+    }
+
+    if (preferredSignalIds.length === 0) {
+      nextPane.axes[preferredSide].push(signalId);
+      continue;
+    }
+
+    if (allowAlternateSide && alternateSignalIds.length === 0) {
+      nextPane.axes[alternateSide].push(signalId);
+      continue;
+    }
+
+    return null;
+  }
+
+  return nextPane;
+}
+
+function makePane(signalIds: string[], side: AxisSide, signalById: Map<string, Signal>) {
+  return appendSignalsToPane(
+    {
+      axes: {
+        left: [],
+        right: []
+      },
+      paneId: makePaneId()
+    },
+    side,
+    signalIds,
+    signalById
+  );
+}
+
+function signalIdsFromDataTransfer(dataTransfer: DataTransfer) {
+  const batchPayload = dataTransfer.getData("application/x-influx-signals");
+  if (batchPayload) {
+    try {
+      const parsed = JSON.parse(batchPayload) as unknown;
+      if (Array.isArray(parsed)) {
+        return [...new Set(parsed.filter((value): value is string => typeof value === "string" && value.length > 0))];
+      }
+    } catch {
+      // Fall back to the legacy single-signal payload below.
+    }
+  }
+
+  const signalId = dataTransfer.getData("application/x-influx-signal");
+  return signalId ? [signalId] : [];
 }
 
 function dropSideFromEvent(event: React.DragEvent<Element>): AxisSide {
@@ -932,7 +1008,9 @@ function App() {
   const markerImportRef = React.useRef<HTMLInputElement | null>(null);
   const resizeRef = React.useRef<PanelResize | null>(null);
   const restoredWorkspaceRef = React.useRef(false);
+  const signalClickTimeoutRef = React.useRef<number | null>(null);
   const signalListRef = React.useRef<HTMLDivElement | null>(null);
+  const signalSelectionAnchorRef = React.useRef<string | null>(null);
   const [config, setConfig] = React.useState<AppConfig | null>(null);
   const [configStatus, setConfigStatus] = React.useState<"checking" | "ok" | "error">("checking");
   const [configError, setConfigError] = React.useState("");
@@ -995,7 +1073,8 @@ function App() {
   const [paneDropTarget, setPaneDropTarget] = React.useState<PaneDropTarget>(null);
   const [reorderTarget, setReorderTarget] = React.useState<ReorderTarget>(null);
   const [signalInsertTarget, setSignalInsertTarget] = React.useState<SignalInsertTarget>(null);
-  const [draggedSignalId, setDraggedSignalId] = React.useState<string | null>(null);
+  const [selectedCatalogSignalIds, setSelectedCatalogSignalIds] = React.useState<string[]>([]);
+  const [draggedSignalIds, setDraggedSignalIds] = React.useState<string[]>([]);
   const [dragPreviewPosition, setDragPreviewPosition] = React.useState<{ x: number; y: number } | null>(null);
   const [toast, setToast] = React.useState("");
   const [savedWorkspaces, setSavedWorkspaces] = React.useState<SavedWorkspace[]>(() => readSavedWorkspaces());
@@ -1007,7 +1086,17 @@ function App() {
   });
   const [collapsedInspectorSections, setCollapsedInspectorSections] = React.useState<Record<string, boolean>>({});
   const derivedCatalogSignals = React.useMemo(() => derivedSignals.map(derivedSignalToSignal), [derivedSignals]);
-  const catalogSignals = React.useMemo(() => [...derivedCatalogSignals, ...signals], [derivedCatalogSignals, signals]);
+  const allCatalogSignals = React.useMemo(() => [...derivedCatalogSignals, ...signals], [derivedCatalogSignals, signals]);
+  const catalogSignals = React.useMemo(
+    () => allCatalogSignals.filter((signal) => matchesSignalSearch(signal, search)),
+    [allCatalogSignals, search]
+  );
+  const selectedCatalogSignalIdSet = React.useMemo(
+    () => new Set(selectedCatalogSignalIds),
+    [selectedCatalogSignalIds]
+  );
+  const draggedSignalIdSet = React.useMemo(() => new Set(draggedSignalIds), [draggedSignalIds]);
+  const draggedSignalId = draggedSignalIds[0] ?? null;
   const signalById = React.useMemo(
     () => new Map([...Object.entries(knownSignals), ...derivedCatalogSignals.map((signal) => [signal.id, signal] as const)]),
     [derivedCatalogSignals, knownSignals]
@@ -1112,6 +1201,34 @@ function App() {
   }, [toast]);
 
   React.useEffect(() => {
+    return () => {
+      if (signalClickTimeoutRef.current !== null) {
+        window.clearTimeout(signalClickTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    signalSelectionAnchorRef.current = null;
+    setSelectedCatalogSignalIds([]);
+    setSignalListScrollTop(0);
+    if (signalListRef.current) {
+      signalListRef.current.scrollTop = 0;
+    }
+  }, [search]);
+
+  React.useEffect(() => {
+    const catalogIds = new Set(allCatalogSignals.map((signal) => signal.id));
+    if (signalSelectionAnchorRef.current && !catalogIds.has(signalSelectionAnchorRef.current)) {
+      signalSelectionAnchorRef.current = null;
+    }
+    setSelectedCatalogSignalIds((current) => {
+      const next = current.filter((signalId) => catalogIds.has(signalId));
+      return next.length === current.length ? current : next;
+    });
+  }, [allCatalogSignals]);
+
+  React.useEffect(() => {
     const signalList = signalListRef.current;
     if (!signalList) {
       return;
@@ -1172,45 +1289,37 @@ function App() {
 
   React.useEffect(() => {
     let cancelled = false;
-    const timeout = window.setTimeout(() => {
-      setSignalsLoading(true);
-      setSignalsError("");
 
-      void fetchSignals({ search, limit: 1200 })
-        .then((response) => {
-          if (cancelled) {
-            return;
-          }
+    setSignalsLoading(true);
+    setSignalsError("");
 
-          setSignals(response.signals);
-          setKnownSignals((current) => {
-            const next = { ...current };
-            for (const signal of response.signals) {
-              next[signal.id] = signal;
-            }
-            return next;
-          });
-          setSignalsSource(response.source);
-          setSignalsError(response.error ?? "");
-        })
-        .catch((error: Error) => {
-          if (!cancelled) {
-            setSignalsError(error.message);
-            setSignalsSource("error");
-          }
-        })
-        .finally(() => {
-          if (!cancelled) {
-            setSignalsLoading(false);
-          }
-        });
-    }, 200);
+    void fetchSignalCatalog()
+      .then((response) => {
+        if (cancelled) {
+          return;
+        }
+
+        setSignals(response.signals);
+        setKnownSignals(Object.fromEntries(response.signals.map((signal) => [signal.id, signal])));
+        setSignalsSource(response.source);
+        setSignalsError(response.error ?? "");
+      })
+      .catch((error: Error) => {
+        if (!cancelled) {
+          setSignalsError(error.message);
+          setSignalsSource("error");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setSignalsLoading(false);
+        }
+      });
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timeout);
     };
-  }, [search]);
+  }, []);
 
   React.useEffect(() => {
     if (restoredWorkspaceRef.current || signalById.size === 0 || signalsLoading) {
@@ -1473,15 +1582,28 @@ function App() {
     };
   }, [liveMode, panes.length]);
 
-  const addPane = React.useCallback((signalId: string, side: AxisSide = "left") => {
-    setQueryDelayMs(0);
-    setPanes((current) => [...current, makePane(signalId, side)]);
-  }, []);
+  const addPane = React.useCallback((signalIds: string | string[], side: AxisSide = "left") => {
+    const nextPane = makePane(Array.isArray(signalIds) ? signalIds : [signalIds], side, signalById);
+    if (!nextPane) {
+      setToast("The selected signals need more than the pane's two unit axes");
+      return;
+    }
 
-  const addPaneAt = React.useCallback((signalId: string, index: number, side: AxisSide = "left") => {
     setQueryDelayMs(0);
+    setToast("");
+    setPanes((current) => [...current, nextPane]);
+  }, [signalById]);
+
+  const addPaneAt = React.useCallback((signalIds: string | string[], index: number, side: AxisSide = "left") => {
+    const nextPane = makePane(Array.isArray(signalIds) ? signalIds : [signalIds], side, signalById);
+    if (!nextPane) {
+      setToast("The selected signals need more than the pane's two unit axes");
+      return;
+    }
+
+    setQueryDelayMs(0);
+    setToast("");
     setPanes((current) => {
-      const nextPane = makePane(signalId, side);
       const insertionIndex = clamp(index, 0, current.length);
       return [
         ...current.slice(0, insertionIndex),
@@ -1489,42 +1611,112 @@ function App() {
         ...current.slice(insertionIndex)
       ];
     });
-  }, []);
+  }, [signalById]);
 
-  const addSignalToPane = React.useCallback((paneId: string, side: AxisSide, signalId: string) => {
-    const incomingSignal = signalById.get(signalId);
-    if (!incomingSignal) {
+  const addSignalToPane = React.useCallback((paneId: string, side: AxisSide, signalIds: string | string[]) => {
+    const nextSignalIds = Array.isArray(signalIds) ? signalIds : [signalIds];
+    const pane = panes.find((candidate) => candidate.paneId === paneId);
+    if (!pane) {
       return;
     }
 
-    let added = false;
-    setPanes((current) =>
-      current.map((pane) => {
-        if (pane.paneId !== paneId) {
-          return pane;
-        }
-
-        const existingUnit = axisUnit(pane, side, signalById);
-        if (existingUnit && existingUnit !== incomingSignal.unit) {
-          setToast(`Cannot add ${incomingSignal.unit} to ${existingUnit} axis`);
-          return pane;
-        }
-
-        added = true;
-        return {
-          ...pane,
-          axes: {
-            ...pane.axes,
-            [side]: [...pane.axes[side], signalId]
-          }
-        };
-      })
+    const nextPane = appendSignalsToPane(
+      pane,
+      side,
+      nextSignalIds,
+      signalById,
+      nextSignalIds.length > 1
     );
-    if (added) {
-      setQueryDelayMs(0);
-      setToast("");
+    if (!nextPane) {
+      const incomingSignal = nextSignalIds.length === 1 ? signalById.get(nextSignalIds[0]) : null;
+      const existingUnit = axisUnit(pane, side, signalById);
+      setToast(
+        incomingSignal && existingUnit !== undefined
+          ? `Cannot add ${incomingSignal.unit} to ${existingUnit} axis`
+          : "The selected signals do not fit the pane's two unit axes"
+      );
+      return;
     }
-  }, [signalById]);
+
+    setPanes((current) => current.map((candidate) => candidate.paneId === paneId ? nextPane : candidate));
+    setQueryDelayMs(0);
+    setToast("");
+  }, [panes, signalById]);
+
+  const cancelPendingSignalClick = React.useCallback(() => {
+    if (signalClickTimeoutRef.current !== null) {
+      window.clearTimeout(signalClickTimeoutRef.current);
+      signalClickTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearCatalogSelection = React.useCallback(() => {
+    cancelPendingSignalClick();
+    signalSelectionAnchorRef.current = null;
+    setSelectedCatalogSignalIds([]);
+  }, [cancelPendingSignalClick]);
+
+  const handleSignalRowClick = React.useCallback((event: React.MouseEvent<HTMLButtonElement>, signalId: string) => {
+    cancelPendingSignalClick();
+
+    const additive = event.metaKey || event.ctrlKey;
+    if (event.shiftKey) {
+      const anchorId = signalSelectionAnchorRef.current;
+      const anchorIndex = anchorId ? catalogSignals.findIndex((signal) => signal.id === anchorId) : -1;
+      const signalIndex = catalogSignals.findIndex((signal) => signal.id === signalId);
+      if (anchorIndex < 0 || signalIndex < 0) {
+        signalSelectionAnchorRef.current = signalId;
+        setSelectedCatalogSignalIds([signalId]);
+        return;
+      }
+
+      const rangeIds = catalogSignals
+        .slice(Math.min(anchorIndex, signalIndex), Math.max(anchorIndex, signalIndex) + 1)
+        .map((signal) => signal.id);
+      setSelectedCatalogSignalIds((current) => additive ? [...new Set([...current, ...rangeIds])] : rangeIds);
+      return;
+    }
+
+    if (additive) {
+      signalSelectionAnchorRef.current = signalId;
+      setSelectedCatalogSignalIds((current) =>
+        current.includes(signalId) ? current.filter((currentId) => currentId !== signalId) : [...current, signalId]
+      );
+      return;
+    }
+
+    if (!selectedCatalogSignalIdSet.has(signalId)) {
+      clearCatalogSelection();
+      addPane(signalId);
+      return;
+    }
+
+    if (event.detail > 1) {
+      return;
+    }
+
+    const selectedInCatalogOrder = catalogSignals
+      .filter((signal) => selectedCatalogSignalIdSet.has(signal.id))
+      .map((signal) => signal.id);
+    if (event.detail === 0) {
+      addPane(selectedInCatalogOrder);
+      return;
+    }
+
+    signalClickTimeoutRef.current = window.setTimeout(() => {
+      signalClickTimeoutRef.current = null;
+      addPane(selectedInCatalogOrder);
+    }, 500);
+  }, [addPane, cancelPendingSignalClick, catalogSignals, clearCatalogSelection, selectedCatalogSignalIdSet]);
+
+  const handleSignalRowDoubleClick = React.useCallback((event: React.MouseEvent<HTMLButtonElement>, signalId: string) => {
+    if (!selectedCatalogSignalIdSet.has(signalId)) {
+      return;
+    }
+
+    event.preventDefault();
+    clearCatalogSelection();
+  }, [clearCatalogSelection, selectedCatalogSignalIdSet]);
 
   const removePane = React.useCallback((paneId: string) => {
     setPanes((current) => current.filter((pane) => pane.paneId !== paneId));
@@ -1754,7 +1946,7 @@ function App() {
   }, [panes.length]);
 
   const clearSignalDrag = React.useCallback(() => {
-    setDraggedSignalId(null);
+    setDraggedSignalIds([]);
     setDragPreviewPosition(null);
     setPaneDropTarget(null);
     setSignalInsertTarget(null);
@@ -1763,26 +1955,31 @@ function App() {
 
   const handleSignalDragStart = React.useCallback(
     (event: React.DragEvent, signalId: string) => {
-      event.dataTransfer.setData("application/x-influx-signal", signalId);
+      cancelPendingSignalClick();
+      const signalIds = selectedCatalogSignalIdSet.has(signalId)
+        ? catalogSignals.filter((signal) => selectedCatalogSignalIdSet.has(signal.id)).map((signal) => signal.id)
+        : [signalId];
+      event.dataTransfer.setData("application/x-influx-signals", JSON.stringify(signalIds));
+      event.dataTransfer.setData("application/x-influx-signal", signalIds[0]);
       event.dataTransfer.effectAllowed = "copy";
       if (dragImageRef.current) {
         event.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
       }
-      setDraggedSignalId(signalId);
+      setDraggedSignalIds(signalIds);
       updateDragPreviewPosition(event);
     },
-    [updateDragPreviewPosition]
+    [cancelPendingSignalClick, catalogSignals, selectedCatalogSignalIdSet, updateDragPreviewPosition]
   );
 
   const handleDropToWorkspace = React.useCallback(
     (event: React.DragEvent) => {
-      const signalId = event.dataTransfer.getData("application/x-influx-signal");
-      if (!signalId) {
+      const signalIds = signalIdsFromDataTransfer(event.dataTransfer);
+      if (signalIds.length === 0) {
         return;
       }
 
       event.preventDefault();
-      addPaneAt(signalId, signalInsertTarget?.index ?? insertIndexFromGridPointer(event.clientY), dropSideFromEvent(event));
+      addPaneAt(signalIds, signalInsertTarget?.index ?? insertIndexFromGridPointer(event.clientY), dropSideFromEvent(event));
       clearSignalDrag();
     },
     [addPaneAt, clearSignalDrag, insertIndexFromGridPointer, signalInsertTarget]
@@ -2608,7 +2805,7 @@ function App() {
             collapsed={Boolean(collapsedLeftSections.allSignals)}
             id="allSignals"
             onToggle={toggleLeftSection}
-            title={signalsSource === "influx" ? "All Signals" : "Fixture Signals"}
+            title={`${signalsSource === "influx" ? "All Signals" : "Fixture Signals"}${selectedCatalogSignalIds.length > 0 ? ` · ${selectedCatalogSignalIds.length} selected` : ""}`}
           >
             <div
               className="signal-list"
@@ -2625,12 +2822,14 @@ function App() {
                     const index = virtualCatalogStart + visibleIndex;
                     return (
                       <button
-                        className={`signal-row${draggedSignalId === signal.id ? " dragging" : ""}`}
+                        aria-label={`Add signal ${signal.fullName}`}
+                        aria-pressed={selectedCatalogSignalIdSet.has(signal.id)}
+                        className={`signal-row${selectedCatalogSignalIdSet.has(signal.id) ? " selected" : ""}${draggedSignalIdSet.has(signal.id) ? " dragging" : ""}`}
                         data-testid={`signal-row-${signal.id}`}
                         draggable
                         key={signal.id}
-                        aria-label={`Add signal ${signal.fullName}`}
-                        onClick={() => addPane(signal.id)}
+                        onClick={(event) => handleSignalRowClick(event, signal.id)}
+                        onDoubleClick={(event) => handleSignalRowDoubleClick(event, signal.id)}
                         onDrag={updateDragPreviewPosition}
                         onDragEnd={clearSignalDrag}
                         onDragStart={(event) => handleSignalDragStart(event, signal.id)}
@@ -3043,16 +3242,16 @@ function App() {
                           return;
                         }
 
-                        const signalId = event.dataTransfer.getData("application/x-influx-signal");
-                        if (!signalId) {
+                        const signalIds = signalIdsFromDataTransfer(event.dataTransfer);
+                        if (signalIds.length === 0) {
                           return;
                         }
                         event.preventDefault();
                         event.stopPropagation();
                         if (signalInsertTarget) {
-                          addPaneAt(signalId, signalInsertTarget.index, dropSideFromEvent(event));
+                          addPaneAt(signalIds, signalInsertTarget.index, dropSideFromEvent(event));
                         } else {
-                          addSignalToPane(pane.paneId, dropSideFromEvent(event), signalId);
+                          addSignalToPane(pane.paneId, dropSideFromEvent(event), signalIds);
                         }
                         clearSignalDrag();
                       }}
@@ -3614,7 +3813,9 @@ function App() {
         >
           <span className="swatch" style={{ background: colorFor(draggedSignalIndex) }} />
           <span>{draggedSignal.fullName}</span>
-          {draggedSignalUnit && <small>{draggedSignalUnit}</small>}
+          {draggedSignalIds.length > 1
+            ? <small>{draggedSignalIds.length} signals</small>
+            : draggedSignalUnit && <small>{draggedSignalUnit}</small>}
         </div>
       )}
       <img

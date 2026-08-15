@@ -58,6 +58,7 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 const apiBase = "api";
+let signalCatalogPromise: Promise<SignalResponse> | null = null;
 
 export function fetchConfig() {
   return fetchJson<AppConfig>(`${apiBase}/config`);
@@ -69,7 +70,7 @@ export function testConfig() {
   });
 }
 
-export function fetchSignals(params: { search?: string; measurement?: string; limit?: number }) {
+export function fetchSignals(params: { search?: string; measurement?: string; limit?: number | "all" }) {
   const searchParams = new URLSearchParams();
   if (params.search) {
     searchParams.set("search", params.search);
@@ -83,6 +84,11 @@ export function fetchSignals(params: { search?: string; measurement?: string; li
 
   const query = searchParams.toString();
   return fetchJson<SignalResponse>(`${apiBase}/signals${query ? `?${query}` : ""}`);
+}
+
+export function fetchSignalCatalog() {
+  signalCatalogPromise ??= fetchSignals({ limit: "all" });
+  return signalCatalogPromise;
 }
 
 export function querySignals(params: {

@@ -88,7 +88,9 @@ app.get("/api/signals", async (req, res) => {
 
     const search = typeof req.query.search === "string" ? req.query.search : "";
     const measurement = typeof req.query.measurement === "string" ? req.query.measurement : "";
-    const limit = typeof req.query.limit === "string" ? Number(req.query.limit) : undefined;
+    const requestedLimit = typeof req.query.limit === "string" ? req.query.limit : undefined;
+    const numericLimit = requestedLimit === undefined ? undefined : Number(requestedLimit);
+    const limit = requestedLimit === "all" ? "all" : Number.isFinite(numericLimit) ? numericLimit : undefined;
     const signals = await discoverSignals(config, { search, measurement, limit });
 
     res.json({

@@ -75,8 +75,8 @@ If HomeScope is not fully configured, it shows a setup state and fixture signals
 
 ## Features
 
-- Searchable signal catalog using Home Assistant entity names.
-- Click or drag signals into chart panes.
+- Page-cached signal catalog with substring and `*` wildcard search.
+- Click or drag signals into chart panes; Shift-select ranges or Command/Ctrl-select individual signals to add them as one plot.
 - Duplicate signals and same-unit overlays.
 - Dual-axis panes for comparing two units in one time-aligned view.
 - Numeric and state-signal rendering.

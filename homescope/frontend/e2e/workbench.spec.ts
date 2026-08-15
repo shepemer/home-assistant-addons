@@ -26,8 +26,19 @@ const primarySignals: Signal[] = [
   makeStateSignal("hvac_mode", "sensor.office_air_conditioner_mode")
 ];
 
+const diskSignals: Signal[] = [
+  makeNumericSignal("aviato_disk_disk15_temperature", "sensor.aviato_disk_disk15_temperature", "°C"),
+  makeNumericSignal("aviato_disk_disk16_temperature", "sensor.aviato_disk_disk16_temperature", "°C"),
+  makeNumericSignal("aviato_disk_disk2_temperature", "sensor.aviato_disk_disk2_temperature", "°C"),
+  makeNumericSignal("aviato_disk_parity_temperature", "sensor.aviato_disk_parity_temperature", "°C"),
+  makeNumericSignal("aviato_max_disk_temperature", "sensor.aviato_max_disk_temperature", "°C"),
+  makeNumericSignal("aviato_disk_disk15_usage", "sensor.aviato_disk_disk15_usage", "%"),
+  makeNumericSignal("aviato_cpu_temperature", "sensor.aviato_cpu_temperature", "°C")
+];
+
 const catalogSignals: Signal[] = [
   ...primarySignals,
+  ...diskSignals,
   ...Array.from({ length: 1096 }, (_value, index) =>
     makeStateSignal(`automation_${index}`, `automation.generated_test_signal_${index}`)
   )
@@ -40,19 +51,20 @@ let lastQueryBody: {
   start: string;
 } | null = null;
 let queryBodies: NonNullable<typeof lastQueryBody>[] = [];
+let signalRequestCount = 0;
 
-function makeNumericSignal(entityId: string, fullName: string): Signal {
+function makeNumericSignal(entityId: string, fullName: string, unit = "W"): Signal {
   const domain = fullName.split(".")[0];
   return {
-    id: `W|${domain}|${entityId}|value`,
-    measurement: "W",
+    id: `${unit}|${domain}|${entityId}|value`,
+    measurement: unit,
     entityId,
     fullName,
     domain,
     field: "value",
     kind: "numeric",
     name: fullName,
-    unit: "W",
+    unit,
     group: "sensor"
   };
 }
@@ -125,6 +137,7 @@ function normalizeSearch(value: string) {
 async function setupMockApi(page: Page) {
   lastQueryBody = null;
   queryBodies = [];
+  signalRequestCount = 0;
   await page.route("**/api/config/test", async (route) => {
     await route.fulfill({
       contentType: "application/json",
@@ -141,6 +154,7 @@ async function setupMockApi(page: Page) {
     });
   });
   await page.route("**/api/signals**", async (route) => {
+    signalRequestCount += 1;
     const url = new URL(route.request().url());
     const search = normalizeSearch(url.searchParams.get("search") ?? "");
     const signals = search
@@ -285,6 +299,100 @@ test("adds duplicate panes and overlays same-unit signals by dragging", async ({
   });
 
   await expect(page.getByTestId("signal-lane").first().locator(".lane-signal-chip")).toHaveCount(2);
+});
+
+test("shift-selects a signal range and adds the group as one pane", async ({ page }) => {
+  const greenRow = page.getByTestId("signal-row-W|sensor|green_power|value");
+  const totalRow = page.getByTestId("signal-row-W|sensor|total_power|value");
+  const blueRow = page.getByTestId("signal-row-W|sensor|blue_power|value");
+
+  await page.keyboard.down("Shift");
+  await greenRow.click();
+  await blueRow.click();
+  await page.keyboard.up("Shift");
+
+  await expect(page.locator(".signal-row.selected")).toHaveCount(3);
+
+  await totalRow.click();
+
+  const lane = page.getByTestId("signal-lane");
+  await expect(lane).toHaveCount(1);
+  await expect(lane.locator(".lane-signal-chip")).toHaveCount(3);
+  await expect(lane).toContainText("sensor.emporia_vue_gen3_balance_power");
+  await expect(lane).toContainText("sensor.emporia_vue_gen3_total_power");
+  await expect(lane).toContainText("sensor.emporia_vue_gen3_phase_a_power");
+});
+
+test("ctrl-selects noncontiguous signals and drags the batch into one pane", async ({ page }) => {
+  const greenRow = page.getByTestId("signal-row-W|sensor|green_power|value");
+  const blueRow = page.getByTestId("signal-row-W|sensor|blue_power|value");
+
+  await greenRow.dispatchEvent("click", { button: 0, ctrlKey: true, detail: 1 });
+  await blueRow.dispatchEvent("click", { button: 0, ctrlKey: true, detail: 1 });
+  await expect(page.locator(".signal-row.selected")).toHaveCount(2);
+
+  await greenRow.dragTo(page.locator(".chart-grid"), {
+    targetPosition: { x: 300, y: 160 }
+  });
+
+  const lane = page.getByTestId("signal-lane");
+  await expect(lane).toHaveCount(1);
+  await expect(lane.locator(".lane-signal-chip")).toHaveCount(2);
+  await expect(lane).toContainText("sensor.emporia_vue_gen3_balance_power");
+  await expect(lane).toContainText("sensor.emporia_vue_gen3_phase_a_power");
+  await expect(lane).not.toContainText("sensor.emporia_vue_gen3_total_power");
+});
+
+test("double-clicking a meta-selected group clears it without adding a pane", async ({ page }) => {
+  const greenRow = page.getByTestId("signal-row-W|sensor|green_power|value");
+  const blueRow = page.getByTestId("signal-row-W|sensor|blue_power|value");
+
+  await greenRow.click({ modifiers: ["Meta"] });
+  await blueRow.click({ modifiers: ["Meta"] });
+  await expect(page.locator(".signal-row.selected")).toHaveCount(2);
+
+  await greenRow.dblclick();
+  await page.waitForTimeout(400);
+
+  await expect(page.locator(".signal-row.selected")).toHaveCount(0);
+  await expect(page.getByTestId("signal-lane")).toHaveCount(0);
+});
+
+test("supports wildcard searches across the cached signal catalog", async ({ page }) => {
+  await page.getByPlaceholder("Search entity, unit, state").fill("*disk*temperature");
+
+  await expect(page.getByText("5 catalog signals")).toBeVisible();
+  await expect(page.locator(".signal-row")).toHaveCount(5);
+  await expect(page.getByTestId("signal-row-°C|sensor|aviato_disk_disk15_temperature|value")).toBeVisible();
+  await expect(page.getByTestId("signal-row-°C|sensor|aviato_disk_disk16_temperature|value")).toBeVisible();
+  await expect(page.getByTestId("signal-row-°C|sensor|aviato_disk_disk2_temperature|value")).toBeVisible();
+  await expect(page.getByTestId("signal-row-°C|sensor|aviato_disk_parity_temperature|value")).toBeVisible();
+  await expect(page.getByTestId("signal-row-°C|sensor|aviato_max_disk_temperature|value")).toBeVisible();
+  await expect(page.getByTestId("signal-row-%|sensor|aviato_disk_disk15_usage|value")).toHaveCount(0);
+  await expect(page.getByTestId("signal-row-°C|sensor|aviato_cpu_temperature|value")).toHaveCount(0);
+});
+
+test("fetches the signal catalog once per page and filters it locally", async ({ page }) => {
+  const requestsAfterSetup = signalRequestCount;
+  const search = page.getByPlaceholder("Search entity, unit, state");
+
+  await search.fill("total_power");
+  await expect(page.getByText("1 catalog signals")).toBeVisible();
+  await expect(page.locator(".signal-row")).toHaveCount(1);
+  expect(signalRequestCount).toBe(requestsAfterSetup);
+
+  await search.fill("*disk*temperature");
+  await expect(page.getByText("5 catalog signals")).toBeVisible();
+  await expect(page.locator(".signal-row")).toHaveCount(5);
+  expect(signalRequestCount).toBe(requestsAfterSetup);
+
+  await search.fill("");
+  await expect(page.getByText("1107 catalog signals")).toBeVisible();
+  expect(signalRequestCount).toBe(requestsAfterSetup);
+
+  await page.reload();
+  await expect(page.getByTestId("signal-row-W|sensor|green_power|value")).toBeVisible();
+  await expect.poll(() => signalRequestCount).toBe(requestsAfterSetup + 1);
 });
 
 test("selects the overlaid line nearest to the mouse pointer", async ({ page }) => {
@@ -840,7 +948,7 @@ test("clicking an overlaid waveform selects the nearest signal and shows stats",
 });
 
 test("virtualizes a large catalog while keeping saved views fixed below it", async ({ page }) => {
-  await expect(page.getByText("1100 catalog signals")).toBeVisible();
+  await expect(page.getByText("1107 catalog signals")).toBeVisible();
   const listBox = await page.locator(".signal-list").boundingBox();
   const savedBox = await page.locator(".saved-views").boundingBox();
   expect(listBox).not.toBeNull();
