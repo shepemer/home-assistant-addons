@@ -21,6 +21,7 @@ jobs:
         addon:
           - codex-terminal
           - homescope
+          - influxdb
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -46,6 +47,7 @@ jobs:
         run: |
           shellcheck -s bash -e SC1008 codex-terminal/run.sh codex-terminal/codex-terminal-shell homescope/run.sh
           shellcheck -s sh codex-terminal/codex-terminal-profile.sh
+          shellcheck -s bash influxdb/run.sh
 
   yaml:
     name: YAML

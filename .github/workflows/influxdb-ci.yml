@@ -1,0 +1,100 @@
+---
+name: InfluxDB CI
+
+on:
+  pull_request:
+    paths:
+      - influxdb/**
+      - homescope/backend/src/**
+      - homescope/package*.json
+      - .github/workflows/influxdb-ci.yml
+      - .github/scripts/update-influxdb.py
+  push:
+    branches:
+      - main
+    paths:
+      - influxdb/**
+      - homescope/backend/src/**
+      - homescope/package*.json
+      - .github/workflows/influxdb-ci.yml
+      - .github/scripts/update-influxdb.py
+  workflow_dispatch:
+
+env:
+  ARCHITECTURES: '["amd64", "aarch64"]'
+  IMAGE_NAME: influxdb
+  REGISTRY_PREFIX: ghcr.io/${{ github.repository_owner }}
+
+permissions:
+  contents: read
+
+jobs:
+  init:
+    name: Initialize build
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Resolve app version
+        id: version
+        shell: bash
+        run: |
+          version="$(sed -n 's/^version: "\([^"]*\)"/\1/p' influxdb/config.yaml)"
+          if [[ -z "${version}" ]]; then
+            echo "::error::Could not read influxdb/config.yaml version"
+            exit 1
+          fi
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Get build matrix
+        id: matrix
+        uses: home-assistant/builder/actions/prepare-multi-arch-matrix@2026.03.2
+        with:
+          architectures: ${{ env.ARCHITECTURES }}
+          image-name: ${{ env.IMAGE_NAME }}
+          registry-prefix: ${{ env.REGISTRY_PREFIX }}
+
+  test:
+    name: Build and test ${{ matrix.arch }}
+    needs: init
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.init.outputs.matrix) }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build local test image
+        uses: home-assistant/builder/actions/build-image@2026.03.2
+        with:
+          arch: ${{ matrix.arch }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+          context: ./influxdb
+          cosign: "false"
+          image: ${{ matrix.image }}
+          image-tags: ci-${{ github.sha }}
+          load: "true"
+          push: "false"
+          cache-gha-scope: influxdb
+          version: ${{ needs.init.outputs.version }}
+
+      - name: Set up Node.js for actual HomeScope queries
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: homescope/package-lock.json
+
+      - name: Install HomeScope test dependencies
+        run: npm ci --prefix homescope
+
+      - name: Run isolated database integration and migration checks
+        env:
+          TEST_IMAGE: ${{ matrix.image }}:ci-${{ github.sha }}
+        run: python3 influxdb/tests/integration.py --image "${TEST_IMAGE}"

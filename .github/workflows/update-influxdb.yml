@@ -1,0 +1,51 @@
+---
+name: Update InfluxDB image
+
+on:
+  schedule:
+    - cron: "23 10 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-influxdb-image
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Propose an official InfluxDB 1.x image update
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out default branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Resolve stable upstream tag and digest
+        run: python3 .github/scripts/update-influxdb.py
+
+      - name: Open or update review PR
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: codex/update-influxdb-image
+          commit-message: "chore(influxdb): update official 1.x image"
+          title: "chore(influxdb): update official 1.x image"
+          add-paths: |
+            influxdb/Dockerfile
+            influxdb/config.yaml
+            influxdb/README.md
+            influxdb/CHANGELOG.md
+          body: |
+            Updates only the pinned official InfluxDB OSS 1.x image, app patch version,
+            engine reference, and changelog. The candidate index includes Linux amd64
+            and arm64 images. No automatic merge, release, or deployment is configured.
+
+            Review the upstream release notes and the exact digest change. Select
+            **Approve workflows to run** if GitHub holds this bot-created PR's checks
+            for approval; both **InfluxDB CI** and **Lint** must pass before merging.
+            Rehearse the upgrade and rollback on a disposable copy before updating
+            a database containing production data.
