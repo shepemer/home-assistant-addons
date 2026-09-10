@@ -1,0 +1,24 @@
+name: InfluxDB
+description: "InfluxDB OSS 1.x for Home Assistant and HomeScope"
+version: "1.0.0"
+slug: influxdb
+url: https://github.com/shepemer/home-assistant-addons/tree/main/influxdb
+arch:
+  - aarch64
+  - amd64
+startup: system
+# Supervisor defaults: automatic boot and Docker's init process enabled.
+timeout: 120
+backup: cold
+ports:
+  8086/tcp: null
+ports_description:
+  8086/tcp: "Optional LAN HTTP access (unencrypted); disabled by default"
+options:
+  bootstrap_admin_username: ""
+  bootstrap_admin_password: ""
+  backup_rpc_network: false
+schema:
+  bootstrap_admin_username: str?
+  bootstrap_admin_password: password?
+  backup_rpc_network: bool

@@ -39,3 +39,7 @@ Important behavior:
 - Keeps InfluxDB credentials in add-on options. Password values are never returned to the browser.
 
 See [HomeScope docs](homescope/README.md) for installation and configuration.
+
+## InfluxDB
+
+See [InfluxDB overview](influxdb/README.md), [setup and backup hooks](influxdb/DOCS.md), and the [migration runbook](influxdb/MIGRATION.md) for replacing the discontinued community app.

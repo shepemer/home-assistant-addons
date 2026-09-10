@@ -1,6 +1,6 @@
 # Home Assistant Add-ons
 
-Custom Home Assistant add-ons for Codex Terminal and HomeScope.
+Custom Home Assistant apps for Codex Terminal, HomeScope, and InfluxDB.
 
 ## AI-Generated Code Disclaimer
 
@@ -20,9 +20,12 @@ Add this repository URL in Home Assistant under **Settings** -> **Add-ons** -> *
 
 - **Codex Terminal**: Codex CLI in a Home Assistant ingress terminal, with optional SSH, Home Assistant MCP, and `/config`, `/addons`, `/share` access.
 - **HomeScope**: Interactive signal workbench for Home Assistant data stored in InfluxDB 1.x.
+- **[InfluxDB](influxdb/README.md)**: Local InfluxDB OSS 1.x with a thin Supervisor wrapper.
 
 ## Docs
 
 - [Repository docs](docs.md)
 - [Codex Terminal docs](codex-terminal/DOCS.md)
 - [HomeScope docs](homescope/README.md)
+- [InfluxDB setup and backup hooks](influxdb/DOCS.md)
+- [InfluxDB migration runbook](influxdb/MIGRATION.md)
