@@ -31,6 +31,7 @@ jobs:
       - name: Open or update review PR
         uses: peter-evans/create-pull-request@v8
         with:
+          draft: true
           branch: codex/update-influxdb-image
           commit-message: "chore(influxdb): update official 1.x image"
           title: "chore(influxdb): update official 1.x image"
