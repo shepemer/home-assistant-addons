@@ -2,8 +2,8 @@
 
 InfluxDB OSS 1.x for Home Assistant Supervisor, using the official upstream Docker image and a small wrapper. The database stays on your Home Assistant computer and retains the v1 HTTP API and InfluxQL used by Home Assistant and HomeScope.
 
-- Engine: InfluxDB OSS **1.12.4**.
-- App version: **1.0.0**.
+- Engine: InfluxDB OSS **1.13.1**.
+- App version: **1.0.1**.
 - Architectures: `amd64` and `aarch64`.
 - Base image: exact official `influxdb` version and multi-platform digest pinned in [Dockerfile](Dockerfile).
 
