@@ -12,7 +12,7 @@ env:
   ARCHITECTURES: '["amd64", "aarch64"]'
   IMAGE_NAME: codex-terminal
   REGISTRY_PREFIX: ghcr.io/${{ github.repository_owner }}
-  VERSION: 1.1.5
+  VERSION: 1.1.6
 
 permissions:
   contents: read

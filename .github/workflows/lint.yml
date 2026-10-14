@@ -46,6 +46,8 @@ jobs:
       - name: Run ShellCheck
         run: |
           shellcheck -s bash -e SC1008 codex-terminal/run.sh codex-terminal/codex-terminal-shell homescope/run.sh
+          shellcheck -s bash -e SC1008 codex-terminal/services.d/ha-mcp/run
+          shellcheck -s sh codex-terminal/services.d/ha-mcp/finish
           shellcheck -s sh codex-terminal/codex-terminal-profile.sh
           shellcheck -s bash influxdb/run.sh
 

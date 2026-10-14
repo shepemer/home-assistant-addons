@@ -1,0 +1,4 @@
+#!/bin/sh
+# s6 restarts unexpected exits, including exit 0; avoid a tight failure loop.
+echo 'Home Assistant MCP server stopped; s6 will restart it if enabled' >&2
+sleep 2

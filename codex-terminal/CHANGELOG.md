@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.6
+
+- Share one supervised, loopback-only Home Assistant MCP HTTP server across Codex chats and the CLI.
+- Install ha-mcp 3.5.1 and hash-locked dependencies in the image instead of launching uvx per client.
+- Preserve HA credentials, tool settings, other MCP servers, CLI autostart, SSH, and remote-control configuration during migration.
+- Wait for connector readiness, restart unexpected exits, and drain connections on add-on shutdown.
+- Requires an add-on image update and restart to migrate existing stdio clients.
+
 ## 1.1.5
 
 - Kept SSH sessions on the same startup-selected Codex CLI as the web terminal after automatic updates.
