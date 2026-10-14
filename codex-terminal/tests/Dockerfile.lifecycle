@@ -1,0 +1,22 @@
+# Run the real service against the add-on's s6 base without installing Codex or Chromium.
+# Build from codex-terminal/, then run the image with --network none.
+FROM ghcr.io/home-assistant/base:3.21
+
+RUN apk add --no-cache python3 uv
+COPY ha-mcp-requirements.txt /opt/ha-mcp-requirements.txt
+RUN uv venv --python /usr/bin/python3 /opt/ha-mcp && \
+    env -u UV_EXTRA_INDEX_URL -u PIP_EXTRA_INDEX_URL uv --no-config pip sync \
+        --index-url https://pypi.org/simple --python /opt/ha-mcp/bin/python --require-hashes \
+        --only-binary :all: /opt/ha-mcp-requirements.txt && \
+    uv cache clean
+
+# The regression checks these match the production Dockerfile.
+ENV S6_CMD_WAIT_FOR_SERVICES=0 S6_SERVICES_GRACETIME=15000
+ENV HA_MCP_TEST_S6=1
+COPY ha-mcp-server.py ha-mcp-config.py /usr/local/libexec/
+COPY services.d/ha-mcp /etc/services.d/ha-mcp
+RUN chmod +x /etc/services.d/ha-mcp/run /etc/services.d/ha-mcp/finish
+COPY Dockerfile /work/Dockerfile
+COPY tests /work/tests
+WORKDIR /work
+CMD ["/usr/bin/with-contenv", "/opt/ha-mcp/bin/python", "-m", "unittest", "discover", "-s", "tests", "-p", "test_s6_lifecycle.py", "-v"]

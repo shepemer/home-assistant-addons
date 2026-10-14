@@ -19,7 +19,7 @@ The add-on updates `@openai/codex` on startup and applies the selected runtime t
 - Persistent Codex auth and configuration in `/data/.codex`.
 - Writable access to `/config`, `/addons`, and `/share`.
 - Home Assistant `ha` CLI available inside the container using the Supervisor token.
-- Optional Home Assistant MCP server configuration using the Supervisor token.
+- Optional shared, supervised Home Assistant MCP server on container loopback, using the Supervisor token.
 - Optional SSH access for Codex remote SSH workflows from another machine.
 - Optional experimental Codex remote-control daemon support.
 - Optional `/data/startup-packages.sh` hook for user-managed startup customization.

@@ -1,0 +1,1000 @@
+{
+  "measured_date": "2026-10-13",
+  "environment": "Isolated Docker Desktop Linux aarch64, Alpine 3.21, Python 3.12.15, uv 0.5.31; network disabled; fake HA state only",
+  "versions": {
+    "ha-mcp": "3.5.1",
+    "fastmcp": "2.14.7",
+    "mcp": "1.30.0"
+  },
+  "limitations": [
+    "Not production measurements. No live add-on was accessed or restarted.",
+    "Identical dependencies in both cases; uv cache pinned at image build, no extra requirements on the measured launcher command.",
+    "UV launcher allocator/cache overhead depends on uv version and cache contents. Report Python-only savings separately.",
+    "No induced swap: logical and compressed swap are zero; no compression-related savings are claimed.",
+    "Container memory includes the fixture client and mock HA server; connector PSS excludes them."
+  ],
+  "stdio": {
+    "transport": "stdio",
+    "clients": 7,
+    "tool_count": 30,
+    "metrics_median": {
+      "connector_pss_resident_bytes": 1706688512,
+      "container_memory_current_bytes": 1742733312,
+      "container_anon_resident_bytes": 1684099072
+    },
+    "samples": [
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "uv_launcher",
+            "rss_bytes": 119914496,
+            "pss_resident_bytes": 109500416,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 9,
+            "kind": "uv_launcher",
+            "rss_bytes": 176697344,
+            "pss_resident_bytes": 166300672,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 10,
+            "kind": "uv_launcher",
+            "rss_bytes": 148353024,
+            "pss_resident_bytes": 137853952,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 11,
+            "kind": "uv_launcher",
+            "rss_bytes": 238219264,
+            "pss_resident_bytes": 227719168,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 12,
+            "kind": "uv_launcher",
+            "rss_bytes": 148480000,
+            "pss_resident_bytes": 137942016,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 13,
+            "kind": "uv_launcher",
+            "rss_bytes": 127434752,
+            "pss_resident_bytes": 116955136,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 16,
+            "kind": "uv_launcher",
+            "rss_bytes": 222568448,
+            "pss_resident_bytes": 212014080,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 181,
+            "kind": "ha_server",
+            "rss_bytes": 105631744,
+            "pss_resident_bytes": 85480448,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 182,
+            "kind": "ha_server",
+            "rss_bytes": 105639936,
+            "pss_resident_bytes": 85271552,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 183,
+            "kind": "ha_server",
+            "rss_bytes": 105795584,
+            "pss_resident_bytes": 85571584,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 184,
+            "kind": "ha_server",
+            "rss_bytes": 106074112,
+            "pss_resident_bytes": 85582848,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 185,
+            "kind": "ha_server",
+            "rss_bytes": 105672704,
+            "pss_resident_bytes": 85405696,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 186,
+            "kind": "ha_server",
+            "rss_bytes": 104968192,
+            "pss_resident_bytes": 85217280,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 187,
+            "kind": "ha_server",
+            "rss_bytes": 106184704,
+            "pss_resident_bytes": 85873664,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 7,
+            "rss_bytes": 739966976,
+            "pss_resident_bytes": 598403072,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 7,
+            "rss_bytes": 1181667328,
+            "pss_resident_bytes": 1108285440,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 1742733312,
+          "anon_resident_bytes": 1684062208,
+          "file_cache_bytes": 18751488,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      },
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "uv_launcher",
+            "rss_bytes": 119914496,
+            "pss_resident_bytes": 109500416,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 9,
+            "kind": "uv_launcher",
+            "rss_bytes": 176697344,
+            "pss_resident_bytes": 166300672,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 10,
+            "kind": "uv_launcher",
+            "rss_bytes": 148353024,
+            "pss_resident_bytes": 137853952,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 11,
+            "kind": "uv_launcher",
+            "rss_bytes": 238219264,
+            "pss_resident_bytes": 227719168,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 12,
+            "kind": "uv_launcher",
+            "rss_bytes": 148480000,
+            "pss_resident_bytes": 137942016,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 13,
+            "kind": "uv_launcher",
+            "rss_bytes": 127434752,
+            "pss_resident_bytes": 116955136,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 16,
+            "kind": "uv_launcher",
+            "rss_bytes": 222568448,
+            "pss_resident_bytes": 212014080,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 181,
+            "kind": "ha_server",
+            "rss_bytes": 105631744,
+            "pss_resident_bytes": 85480448,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 182,
+            "kind": "ha_server",
+            "rss_bytes": 105639936,
+            "pss_resident_bytes": 85271552,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 183,
+            "kind": "ha_server",
+            "rss_bytes": 105795584,
+            "pss_resident_bytes": 85571584,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 184,
+            "kind": "ha_server",
+            "rss_bytes": 106074112,
+            "pss_resident_bytes": 85582848,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 185,
+            "kind": "ha_server",
+            "rss_bytes": 105672704,
+            "pss_resident_bytes": 85405696,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 186,
+            "kind": "ha_server",
+            "rss_bytes": 104968192,
+            "pss_resident_bytes": 85217280,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 187,
+            "kind": "ha_server",
+            "rss_bytes": 106184704,
+            "pss_resident_bytes": 85873664,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 7,
+            "rss_bytes": 739966976,
+            "pss_resident_bytes": 598403072,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 7,
+            "rss_bytes": 1181667328,
+            "pss_resident_bytes": 1108285440,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 1741234176,
+          "anon_resident_bytes": 1684094976,
+          "file_cache_bytes": 18751488,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      },
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "uv_launcher",
+            "rss_bytes": 119914496,
+            "pss_resident_bytes": 109500416,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 9,
+            "kind": "uv_launcher",
+            "rss_bytes": 176697344,
+            "pss_resident_bytes": 166300672,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 10,
+            "kind": "uv_launcher",
+            "rss_bytes": 148353024,
+            "pss_resident_bytes": 137853952,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 11,
+            "kind": "uv_launcher",
+            "rss_bytes": 238219264,
+            "pss_resident_bytes": 227719168,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 12,
+            "kind": "uv_launcher",
+            "rss_bytes": 148480000,
+            "pss_resident_bytes": 137942016,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 13,
+            "kind": "uv_launcher",
+            "rss_bytes": 127434752,
+            "pss_resident_bytes": 116955136,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 16,
+            "kind": "uv_launcher",
+            "rss_bytes": 222568448,
+            "pss_resident_bytes": 212014080,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 181,
+            "kind": "ha_server",
+            "rss_bytes": 105631744,
+            "pss_resident_bytes": 85480448,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 182,
+            "kind": "ha_server",
+            "rss_bytes": 105639936,
+            "pss_resident_bytes": 85271552,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 183,
+            "kind": "ha_server",
+            "rss_bytes": 105795584,
+            "pss_resident_bytes": 85571584,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 184,
+            "kind": "ha_server",
+            "rss_bytes": 106074112,
+            "pss_resident_bytes": 85582848,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 185,
+            "kind": "ha_server",
+            "rss_bytes": 105672704,
+            "pss_resident_bytes": 85405696,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 186,
+            "kind": "ha_server",
+            "rss_bytes": 104968192,
+            "pss_resident_bytes": 85217280,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 187,
+            "kind": "ha_server",
+            "rss_bytes": 106184704,
+            "pss_resident_bytes": 85873664,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 7,
+            "rss_bytes": 739966976,
+            "pss_resident_bytes": 598403072,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 7,
+            "rss_bytes": 1181667328,
+            "pss_resident_bytes": 1108285440,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 1743200256,
+          "anon_resident_bytes": 1684099072,
+          "file_cache_bytes": 18751488,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      },
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "uv_launcher",
+            "rss_bytes": 119914496,
+            "pss_resident_bytes": 109500416,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 9,
+            "kind": "uv_launcher",
+            "rss_bytes": 176697344,
+            "pss_resident_bytes": 166300672,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 10,
+            "kind": "uv_launcher",
+            "rss_bytes": 148353024,
+            "pss_resident_bytes": 137853952,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 11,
+            "kind": "uv_launcher",
+            "rss_bytes": 238219264,
+            "pss_resident_bytes": 227719168,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 12,
+            "kind": "uv_launcher",
+            "rss_bytes": 148480000,
+            "pss_resident_bytes": 137942016,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 13,
+            "kind": "uv_launcher",
+            "rss_bytes": 127434752,
+            "pss_resident_bytes": 116955136,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 16,
+            "kind": "uv_launcher",
+            "rss_bytes": 222568448,
+            "pss_resident_bytes": 212014080,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 181,
+            "kind": "ha_server",
+            "rss_bytes": 105631744,
+            "pss_resident_bytes": 85480448,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 182,
+            "kind": "ha_server",
+            "rss_bytes": 105639936,
+            "pss_resident_bytes": 85271552,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 183,
+            "kind": "ha_server",
+            "rss_bytes": 105795584,
+            "pss_resident_bytes": 85571584,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 184,
+            "kind": "ha_server",
+            "rss_bytes": 106074112,
+            "pss_resident_bytes": 85582848,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 185,
+            "kind": "ha_server",
+            "rss_bytes": 105672704,
+            "pss_resident_bytes": 85405696,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 186,
+            "kind": "ha_server",
+            "rss_bytes": 104980480,
+            "pss_resident_bytes": 85229568,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 187,
+            "kind": "ha_server",
+            "rss_bytes": 106184704,
+            "pss_resident_bytes": 85873664,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 7,
+            "rss_bytes": 739979264,
+            "pss_resident_bytes": 598415360,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 7,
+            "rss_bytes": 1181667328,
+            "pss_resident_bytes": 1108285440,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 1743052800,
+          "anon_resident_bytes": 1684099072,
+          "file_cache_bytes": 18751488,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      },
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "uv_launcher",
+            "rss_bytes": 119914496,
+            "pss_resident_bytes": 109500416,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 9,
+            "kind": "uv_launcher",
+            "rss_bytes": 176697344,
+            "pss_resident_bytes": 166300672,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 10,
+            "kind": "uv_launcher",
+            "rss_bytes": 148353024,
+            "pss_resident_bytes": 137853952,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 11,
+            "kind": "uv_launcher",
+            "rss_bytes": 238219264,
+            "pss_resident_bytes": 227719168,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 12,
+            "kind": "uv_launcher",
+            "rss_bytes": 148480000,
+            "pss_resident_bytes": 137942016,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 13,
+            "kind": "uv_launcher",
+            "rss_bytes": 127434752,
+            "pss_resident_bytes": 116955136,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 16,
+            "kind": "uv_launcher",
+            "rss_bytes": 222568448,
+            "pss_resident_bytes": 212014080,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 181,
+            "kind": "ha_server",
+            "rss_bytes": 105631744,
+            "pss_resident_bytes": 85480448,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 182,
+            "kind": "ha_server",
+            "rss_bytes": 105639936,
+            "pss_resident_bytes": 85271552,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 183,
+            "kind": "ha_server",
+            "rss_bytes": 105795584,
+            "pss_resident_bytes": 85571584,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 184,
+            "kind": "ha_server",
+            "rss_bytes": 106074112,
+            "pss_resident_bytes": 85582848,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 185,
+            "kind": "ha_server",
+            "rss_bytes": 105672704,
+            "pss_resident_bytes": 85405696,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 186,
+            "kind": "ha_server",
+            "rss_bytes": 104980480,
+            "pss_resident_bytes": 85229568,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          {
+            "pid": 187,
+            "kind": "ha_server",
+            "rss_bytes": 106184704,
+            "pss_resident_bytes": 85873664,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 7,
+            "rss_bytes": 739979264,
+            "pss_resident_bytes": 598415360,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 7,
+            "rss_bytes": 1181667328,
+            "pss_resident_bytes": 1108285440,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 1741279232,
+          "anon_resident_bytes": 1684119552,
+          "file_cache_bytes": 18751488,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      }
+    ]
+  },
+  "http": {
+    "transport": "http",
+    "clients": 7,
+    "tool_count": 30,
+    "metrics_median": {
+      "connector_pss_resident_bytes": 102752256,
+      "container_memory_current_bytes": 131420160,
+      "container_anon_resident_bytes": 102785024
+    },
+    "samples": [
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "ha_server",
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 1,
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 0,
+            "rss_bytes": 0,
+            "pss_resident_bytes": 0,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 131059712,
+          "anon_resident_bytes": 102785024,
+          "file_cache_bytes": 18800640,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      },
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "ha_server",
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 1,
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 0,
+            "rss_bytes": 0,
+            "pss_resident_bytes": 0,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 131420160,
+          "anon_resident_bytes": 102785024,
+          "file_cache_bytes": 18800640,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      },
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "ha_server",
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 1,
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 0,
+            "rss_bytes": 0,
+            "pss_resident_bytes": 0,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 131420160,
+          "anon_resident_bytes": 102785024,
+          "file_cache_bytes": 18800640,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      },
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "ha_server",
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 1,
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 0,
+            "rss_bytes": 0,
+            "pss_resident_bytes": 0,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 131936256,
+          "anon_resident_bytes": 102817792,
+          "file_cache_bytes": 18800640,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      },
+      {
+        "connector_processes": [
+          {
+            "pid": 8,
+            "kind": "ha_server",
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        ],
+        "connector_totals": {
+          "ha_server": {
+            "count": 1,
+            "rss_bytes": 107405312,
+            "pss_resident_bytes": 102752256,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          },
+          "uv_launcher": {
+            "count": 0,
+            "rss_bytes": 0,
+            "pss_resident_bytes": 0,
+            "swap_logical_bytes": 0,
+            "swap_pss_logical_bytes": 0
+          }
+        },
+        "container": {
+          "memory_current_bytes": 131399680,
+          "anon_resident_bytes": 102817792,
+          "file_cache_bytes": 18800640,
+          "swap_logical_bytes": 0,
+          "zswap_compressed_bytes": 0,
+          "zswapped_logical_bytes": 0
+        },
+        "host_zram": [],
+        "notes": [
+          "PSS counts proportional resident RAM, excluding logical swap.",
+          "memory.current includes file cache and kernel charges; it is not process PSS.",
+          "Swap logical bytes are uncompressed page sizes, not physical RAM saved.",
+          "zswap is container-attributed when available; zram is host-wide.",
+          "null means unavailable, not zero. No credentials or command lines are emitted."
+        ]
+      }
+    ]
+  }
+}

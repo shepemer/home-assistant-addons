@@ -20,7 +20,13 @@ The Codex command uses `--dangerously-bypass-approvals-and-sandbox`. This is int
 
 Default: `true`
 
-When enabled, startup attempts to configure a Codex MCP server named `home_assistant` using the Supervisor token and `ha-mcp`. If the token, Home Assistant API, `uvx`, or Codex CLI is unavailable, startup logs a warning and continues without MCP.
+When enabled, the add-on runs one persistent `ha-mcp==3.5.1` server for all Codex chats and the CLI. It listens only at `http://127.0.0.1:8765/mcp` inside the container. This port is not published, exposed through ingress, or available on the LAN. Clients use the shared `/data/.codex/config.toml`; opening another chat does not launch another Python connector or `uvx` process.
+
+The server and its hash-locked dependencies are installed at `/opt/ha-mcp` during the image build. Startup migrates only the `home_assistant` transport, preserving its tool policy and every other MCP server. Existing HA environment settings move to the private, mode-0600 `/data/.codex/ha-mcp-env.json`; Supervisor tokens are refreshed each start, and custom HA URLs and tokens are retained. Do not publish this file or include it in diagnostics.
+
+The s6 service waits for configuration, then startup waits up to 60 seconds for HTTP readiness before starting remote-control and the terminal CLI. If startup is slow or HA is offline, the terminal remains available. s6 retries unexpected server exits with a two-second delay and stops the server on container shutdown. A connector crash ends its current MCP sessions; reconnect affected clients after recovery. Disconnecting an individual client does not stop the server or other sessions.
+
+`auto_launch`, SSH, and remote-control keep their existing behavior. Disabling `enable_ha_mcp` skips the managed service, as an optional integration; remove a previously configured `home_assistant` entry if you also want to stop clients trying to connect.
 
 ### `enable_ssh`
 
@@ -179,7 +185,21 @@ Confirm Codex auth is configured with `codex login status` in the web terminal. 
 
 ### Home Assistant MCP is unavailable
 
-Check that `enable_ha_mcp` is enabled and the add-on logs show a successful Home Assistant API probe. MCP setup is optional and fails open so the terminal remains usable.
+Check that `enable_ha_mcp` is enabled and the add-on logs show `Shared Home Assistant MCP server ready on loopback`. The following checks do not print HA credentials:
+
+```bash
+s6-svstat /run/service/ha-mcp
+/opt/ha-mcp/bin/python /usr/local/libexec/ha-mcp-server.py --check
+codex mcp get home_assistant
+```
+
+A readiness warning leaves the CLI available while s6 retries the connector. Check the saved configuration and credentials locally; do not paste the private environment file into logs or issues.
+
+### Rolling out the shared connector
+
+Update to the 1.1.6 image and restart the add-on once when active chats can reconnect. The restart is required to install the bundled server, supervise it, and replace already-running stdio connectors. Development and test runs do not modify or stop existing chats. Startup regenerates the HTTP configuration on subsequent restarts and upgrades. The normal CLI still auto-launches when `auto_launch: true`.
+
+See [shared MCP validation](tests/README.md) for regression tests, isolated benchmark methodology, and read-only rollout measurements. Container `memory.current` includes more than connector RAM. Compare connector PSS rather than summing RSS; logical swapped pages are not physical compressed-swap RAM savings.
 
 ### Local add-on sources are missing
 

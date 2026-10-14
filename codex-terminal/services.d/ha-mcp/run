@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+# /run.sh enables this initially-down service only after configuration migration.
+exec /opt/ha-mcp/bin/python /usr/local/libexec/ha-mcp-config.py --exec

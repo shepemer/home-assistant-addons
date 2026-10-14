@@ -1,0 +1,60 @@
+---
+name: Codex Terminal CI
+
+on:
+  pull_request:
+    paths:
+      - codex-terminal/**
+      - .github/workflows/codex-terminal-ci.yml
+  push:
+    branches:
+      - main
+    paths:
+      - codex-terminal/**
+      - .github/workflows/codex-terminal-ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shared-mcp:
+    name: Shared Home Assistant MCP regression
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build isolated test runtime from pinned dependencies
+        run: docker build -f codex-terminal/tests/Dockerfile -t codex-ha-mcp-validation codex-terminal
+
+      - name: Run configuration, lifecycle and real transport regression tests
+        run: |
+          docker run --rm --network none \
+            -v "$PWD/codex-terminal:/work:ro" \
+            codex-ha-mcp-validation
+
+      - name: Build the actual Home Assistant s6 lifecycle fixture
+        run: docker build -f codex-terminal/tests/Dockerfile.lifecycle -t codex-ha-mcp-lifecycle codex-terminal
+
+      - name: Verify supervision, restart and clean shutdown
+        run: docker run --rm --network none codex-ha-mcp-lifecycle
+
+      - name: Build the full add-on with a reproducible test CLI version
+        run: |
+          docker build -t codex-terminal:shared-ha-mcp \
+            --build-arg BUILD_ARCH=amd64 \
+            --build-arg CODEX_VERSION=0.162.1 \
+            codex-terminal
+
+      - name: Verify multiple actual Codex clients and chats
+        run: |
+          docker run --rm --network none \
+            --entrypoint /opt/ha-mcp/bin/python \
+            -e HA_MCP_TEST_CODEX=1 \
+            -v "$PWD/codex-terminal:/work:ro" -w /work \
+            codex-terminal:shared-ha-mcp \
+            -m unittest discover -s tests -p test_codex_clients.py -v
+
+      - name: Verify real add-on startup, active CLI and restart persistence
+        run: python3 codex-terminal/tests/addon_smoke.py --cli-version 0.162.1

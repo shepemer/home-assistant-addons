@@ -6,7 +6,9 @@ readonly HOME="/root"
 readonly CODEX_VERSION="${CODEX_VERSION:-latest}"
 readonly NPM_GLOBAL_PREFIX="/data/.npm-global"
 readonly CODEX_HOME_DIR="/data/.codex"
-readonly HA_MCP_PACKAGE="ha-mcp==3.5.1"
+readonly HA_MCP_PYTHON="/opt/ha-mcp/bin/python"
+readonly HA_MCP_SERVICE="/run/service/ha-mcp"
+readonly HA_MCP_READY_TIMEOUT_SECONDS="${HA_MCP_READY_TIMEOUT_SECONDS:-60}"
 readonly SESSION_NAME="codex"
 readonly NPM_VIEW_TIMEOUT_SECONDS="${NPM_VIEW_TIMEOUT_SECONDS:-30}"
 readonly NPM_INSTALL_TIMEOUT_SECONDS="${NPM_INSTALL_TIMEOUT_SECONDS:-300}"
@@ -280,7 +282,7 @@ check_bubblewrap() {
 }
 
 probe_homeassistant_api() {
-    curl -fsS \
+    curl --connect-timeout 3 --max-time 10 -fsS \
         -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
         http://supervisor/core/api/ >/tmp/codex-ha-api-probe.log 2>/tmp/codex-ha-api-probe.err
 }
@@ -295,50 +297,47 @@ configure_ha_mcp() {
     }
 
     if ! load_supervisor_token; then
-        bashio::log.warning "SUPERVISOR_TOKEN is not available; Home Assistant MCP integration skipped"
+        bashio::log.warning "SUPERVISOR_TOKEN is not available; trying saved Home Assistant credentials"
+    fi
+
+    if [ ! -x "${HA_MCP_PYTHON}" ]; then
+        bashio::log.warning "Bundled Home Assistant MCP environment is unavailable"
         return 0
     fi
 
-    require_command uvx || {
-        bashio::log.warning "uvx is required for Home Assistant MCP integration"
-        return 0
-    }
-
-    if [ -z "${CODEX_BIN}" ] || [ ! -x "${CODEX_BIN}" ]; then
-        bashio::log.warning "Codex CLI is required for Home Assistant MCP integration"
-        return 0
+    if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
+        if probe_homeassistant_api; then
+            bashio::log.info "Home Assistant API probe succeeded"
+        else
+            bashio::log.warning "Home Assistant API probe failed; MCP will retry HA calls when available"
+        fi
     fi
 
-    if probe_homeassistant_api; then
-        bashio::log.info "Home Assistant API probe succeeded"
-    else
-        bashio::log.warning "Home Assistant API probe failed"
-        log_tail /tmp/codex-ha-api-probe.err "ha-api"
-    fi
-
-    "${CODEX_BIN}" mcp remove home_assistant >/dev/null 2>&1 || true
-    if "${CODEX_BIN}" mcp add home_assistant \
-        --env HOMEASSISTANT_URL=http://supervisor/core \
-        --env HOMEASSISTANT_TOKEN="${SUPERVISOR_TOKEN}" \
-        --env FASTMCP_SHOW_SERVER_BANNER=false \
-        --env FASTMCP_LOG_LEVEL=ERROR \
-        --env FASTMCP_ENABLE_RICH_LOGGING=false \
-        --env FASTMCP_CHECK_FOR_UPDATES=off \
-        -- uvx --index-strategy unsafe-best-match --from "${HA_MCP_PACKAGE}" python -m ha_mcp >/tmp/codex-mcp-add.log 2>&1; then
-        bashio::log.info "Home Assistant MCP server configured"
-    else
-        bashio::log.warning "Home Assistant MCP server configuration failed"
-        log_tail /tmp/codex-mcp-add.log "codex mcp add"
+    # Both the app server and CLI read CODEX_HOME/config.toml. Preserve all other
+    # servers and HA tool policy while moving its stdio environment to a private file.
+    if ! "${HA_MCP_PYTHON}" /usr/local/libexec/ha-mcp-config.py; then
+        bashio::log.warning "Home Assistant MCP config migration failed"
         return 0
     fi
 
-    if "${CODEX_BIN}" mcp get home_assistant >/tmp/codex-mcp-get.log 2>&1 \
-        && grep -q "${HA_MCP_PACKAGE}" /tmp/codex-mcp-get.log \
-        && grep -q "FASTMCP_SHOW_SERVER_BANNER" /tmp/codex-mcp-get.log; then
-        bashio::log.info "Home Assistant MCP config verified"
-    else
-        bashio::log.warning "Home Assistant MCP config verification failed"
-    fi
+    local deadline=$((SECONDS + HA_MCP_READY_TIMEOUT_SECONDS))
+    # CMD can start while s6 is still creating the legacy service supervisors.
+    until s6-svc -u "${HA_MCP_SERVICE}" 2>/dev/null; do
+        if [ "${SECONDS}" -ge "${deadline}" ]; then
+            bashio::log.warning "Home Assistant MCP supervisor is unavailable"
+            return 0
+        fi
+        sleep 1
+    done
+
+    while [ "${SECONDS}" -lt "${deadline}" ]; do
+        if "${HA_MCP_PYTHON}" /usr/local/libexec/ha-mcp-server.py --check; then
+            bashio::log.info "Shared Home Assistant MCP server ready on loopback"
+            return 0
+        fi
+        sleep 1
+    done
+    bashio::log.warning "Home Assistant MCP readiness timed out; s6 will keep retrying while the terminal starts"
 }
 
 configure_ssh() {
