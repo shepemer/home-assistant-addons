@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3
+
+- Update the official InfluxDB OSS image to `1.13.1@sha256:08c8d90702423fdc7e19e90b89b828772404f571e44abbd113880ab85ca47e1f` (Linux amd64 and arm64).
+- Review upstream changes and rehearse the upgrade before installation.
+
 ## 1.0.2
 
 - Update the official InfluxDB OSS image to `1.13.1@sha256:1126a8335b2dd106c5360b9f493c365d9b548100ad68791b4b421dc9f408f8d3` (Linux amd64 and arm64).
