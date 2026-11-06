@@ -24,7 +24,7 @@ map:
   - type: homeassistant_config
     read_only: false
     path: /config
-  - type: addons
+  - type: local_apps
     read_only: false
     path: /addons
   - type: share
