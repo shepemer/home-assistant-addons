@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { configValidationError, redactConfig } from "../src/config.js";
 import {
   discoverSignals,
+  parseQueryBody,
   parseSignalId,
   queryInflux,
   querySignals,
@@ -51,6 +52,35 @@ afterEach(() => {
 });
 
 describe("InfluxDB query helpers", () => {
+  it("validates both query signal formats and supplies the default point limit", () => {
+    const body = {
+      signals: ["W|sensor|power|value", { requestId: "pane:0", signalId: "state|sensor|mode|state" }],
+      start: "2026-05-09T00:00:00Z",
+      end: "2026-05-09T01:00:00Z"
+    };
+
+    expect(parseQueryBody(body)).toEqual({ ...body, maxPoints: 1600 });
+  });
+
+  it.each([
+    { signals: [] },
+    { signals: Array.from({ length: 49 }, () => "W|sensor|power|value") },
+    { signals: [{ requestId: "pane:0", signalId: { nested: "unexpected" } }] },
+    { signals: [{ requestId: "", signalId: "W|sensor|power|value" }] },
+    { maxPoints: 5001 },
+    { maxPoints: 49 },
+    { maxPoints: 50.5 },
+    { maxPoints: "1600" },
+    { start: null }
+  ])("rejects invalid query input %j", (invalid) => {
+    expect(() => parseQueryBody({
+      signals: ["W|sensor|power|value"],
+      start: "2026-05-09T00:00:00Z",
+      end: "2026-05-09T01:00:00Z",
+      ...invalid
+    })).toThrow();
+  });
+
   it("escapes identifiers and string values for InfluxQL", () => {
     expect(quoteIdentifier('unit "quoted" \\ path')).toBe('"unit \\"quoted\\" \\\\ path"');
     expect(quoteString("fan speed, zone=lab \\ it's")).toBe("'fan speed, zone=lab \\\\ it\\'s'");

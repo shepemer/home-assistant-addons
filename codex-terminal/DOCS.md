@@ -150,6 +150,11 @@ ha supervisor info
 
 ## Authentication
 
+The web terminal is available only through Home Assistant ingress. Its proxy
+accepts connections only from the Supervisor, and the terminal itself listens on
+container loopback. Other add-ons cannot bypass Home Assistant login by connecting
+directly to the terminal port.
+
 If `/data/.codex/auth.json` is missing, Codex will prompt for authentication in the terminal. After authentication, the file persists in add-on data and will be reused on later starts.
 
 ## Startup Package Hook

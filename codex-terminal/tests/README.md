@@ -18,6 +18,9 @@ ordering and continued CLI autostart on success and failure. These are MCP wire
 clients; they do not claim a model-driven Codex conversation or a production HA
 integration test.
 
+The HTTP regression also rejects untrusted browser Host and Origin headers
+before creating an MCP session, while preserving local client access.
+
 The actual Home Assistant base/s6 lifecycle fixture additionally verifies the
 service starts only when enabled, restarts after SIGKILL, shuts down on SIGTERM,
 and retains configuration on restart:
@@ -54,9 +57,13 @@ To reproduce the controlled Linux memory comparison, run each mode in a fresh
 container. Both use the same package versions, fake HA data and client count.
 The stdio cache is populated and synchronized to the same locked packages during
 image build. The measured command is the original `uvx --index-strategy
-unsafe-best-match --from ha-mcp==3.5.1 python -m ha_mcp`, with `--offline` added
+unsafe-best-match --from ha-mcp==8.5.0 python -m ha_mcp`, with `--offline` added
 for the network-disabled fixture. No extra requirements are passed to the
 measured launcher. The HTTP case launches the new persistent wrapper.
+
+The current fixture uses the upgraded locked dependencies. The measurements
+below describe the earlier versions explicitly listed with those results;
+rerun the benchmark to measure the current runtime.
 
 ```sh
 for transport in stdio http; do
