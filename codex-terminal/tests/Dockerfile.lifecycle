@@ -1,6 +1,6 @@
 # Run the real service against the add-on's s6 base without installing Codex or Chromium.
 # Build from codex-terminal/, then run the image with --network none.
-FROM ghcr.io/home-assistant/base:3.21
+FROM ghcr.io/home-assistant/base:3.24
 
 RUN apk add --no-cache python3 uv
 COPY ha-mcp-requirements.txt /opt/ha-mcp-requirements.txt
