@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.7
+
+- Restrict the web terminal to Home Assistant's ingress proxy and bind ttyd to loopback.
+- Validate Host and Origin headers on the shared Home Assistant MCP server to prevent DNS rebinding.
+- Update the Alpine base image and pinned Python dependencies with security fixes.
+
 ## 1.1.6
 
 - Share one supervised, loopback-only Home Assistant MCP HTTP server across Codex chats and the CLI.
