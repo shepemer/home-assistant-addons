@@ -61,6 +61,8 @@ influx_password: "your-password"
 
 Password values stay on the HomeScope server. The browser only receives redacted connection status.
 
+The add-on accepts web requests only from Home Assistant's ingress proxy. Local development servers bind to loopback; use the Vite frontend on the same computer to access the API through its proxy.
+
 ## First Run Check
 
 After starting the add-on:

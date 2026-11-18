@@ -1,7 +1,9 @@
 """Real ha-mcp transport regression; run with the add-on's locked virtualenv."""
 
 from concurrent.futures import ThreadPoolExecutor
+import http.client
 from importlib.util import find_spec
+import json
 import os
 from pathlib import Path
 import unittest
@@ -11,6 +13,39 @@ from mcp_fixture import FakeHA, HTTPClient, StdioClient, initialize_clients, sha
 
 @unittest.skipUnless(find_spec("ha_mcp"), "Install ha-mcp-requirements.txt to run the real transport integration")
 class SharedMCPIntegrationTests(unittest.TestCase):
+    def test_rejects_untrusted_browser_hosts_and_origins(self):
+        with FakeHA() as ha, shared_server(ha.env):
+            payload = json.dumps({
+                "jsonrpc": "2.0", "id": 1, "method": "initialize",
+                "params": {"protocolVersion": "2025-03-26", "capabilities": {},
+                           "clientInfo": {"name": "browser-boundary-test", "version": "1"}},
+            })
+            for untrusted_headers, expected in [
+                ({"Host": "attacker.example:8765"}, 421),
+                ({"Origin": "https://attacker.example"}, 403),
+            ]:
+                with self.subTest(headers=untrusted_headers):
+                    connection = http.client.HTTPConnection("127.0.0.1", 8765, timeout=5)
+                    try:
+                        connection.request("POST", "/mcp", payload, headers={
+                            "Content-Type": "application/json",
+                            "Accept": "application/json, text/event-stream",
+                            **untrusted_headers,
+                        })
+                        response = connection.getresponse()
+                        self.assertEqual(response.status, expected)
+                        self.assertIsNone(response.getheader("Mcp-Session-Id"))
+                        response.read()
+                    finally:
+                        connection.close()
+            # Ordinary local MCP clients still connect after rejected requests.
+            client = HTTPClient()
+            try:
+                client.initialize()
+                client.state()
+            finally:
+                client.close()
+
     def test_concurrent_clients_disconnects_and_tool_parity(self):
         with FakeHA() as ha, shared_server(ha.env) as server:
             clients = [HTTPClient() for _ in range(7)]

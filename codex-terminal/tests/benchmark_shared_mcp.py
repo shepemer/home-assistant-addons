@@ -27,7 +27,7 @@ def benchmark(transport, count):
                 for _ in range(count):
                     clients.append(HTTPClient() if transport == "http" else StdioClient(ha.env, [
                         "uvx", "--offline",
-                        "--index-strategy", "unsafe-best-match", "--from", "ha-mcp==3.5.1",
+                        "--index-strategy", "unsafe-best-match", "--from", "ha-mcp==8.5.0",
                         "python", "-m", "ha_mcp"]))
                 tools = initialize_clients(clients)
                 time.sleep(2)

@@ -1,4 +1,4 @@
-FROM ghcr.io/home-assistant/base:3.21
+FROM ghcr.io/home-assistant/base:3.24
 
 ARG BUILD_VERSION
 ARG BUILD_ARCH
@@ -17,6 +17,7 @@ RUN apk add --no-cache \
     curl \
     nodejs \
     npm \
+    nginx \
     openssh-server \
     procps \
     python3 \
@@ -70,9 +71,12 @@ COPY run.sh /run.sh
 COPY ha /usr/local/bin/ha
 COPY ha-mcp-server.py ha-mcp-config.py /usr/local/libexec/
 COPY services.d/ha-mcp /etc/services.d/ha-mcp
+COPY services.d/ingress /etc/services.d/ingress
+COPY nginx.conf /etc/nginx/nginx.conf
 RUN chmod +x /run.sh /usr/local/bin/ha /usr/local/bin/codex-terminal-shell && \
     chmod +x /usr/local/libexec/ha-mcp-server.py /usr/local/libexec/ha-mcp-config.py \
-        /etc/services.d/ha-mcp/run /etc/services.d/ha-mcp/finish && \
+        /etc/services.d/ha-mcp/run /etc/services.d/ha-mcp/finish \
+        /etc/services.d/ingress/run && \
     chmod 0644 /etc/profile.d/codex-terminal.sh && \
     printf '%s\n' /usr/local/bin/codex-terminal-shell >> /etc/shells
 

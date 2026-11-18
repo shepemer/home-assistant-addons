@@ -71,6 +71,50 @@ cli = [pid for pid, p in processes.items()
 print(json.dumps({'ha_pids': ha, 'uv_pids': uv, 'cli_pids': cli,
                   'parents': {pid: p['parent'] for pid, p in processes.items()}}))
 '''
+INGRESS_PROBE = r'''
+import http.client, json, time
+from pathlib import Path
+
+deadline = time.monotonic() + 10
+while True:
+    connection = http.client.HTTPConnection('127.0.0.1', 7682, timeout=2)
+    try:
+        connection.request('GET', '/')
+        response = connection.getresponse()
+        assert response.status == 200, 'Terminal is unavailable on loopback'
+        response.read()
+        break
+    except OSError:
+        if time.monotonic() >= deadline:
+            raise AssertionError('Terminal did not start on loopback') from None
+        time.sleep(0.1)
+    finally:
+        connection.close()
+
+listeners = []
+for table in ('/proc/net/tcp', '/proc/net/tcp6'):
+    for line in Path(table).read_text().splitlines()[1:]:
+        fields = line.split()
+        if fields[3] == '0A' and fields[1].endswith(':1E02'):
+            listeners.append(fields[1])
+assert listeners == ['0100007F:1E02'], 'Terminal must listen only on IPv4 loopback'
+
+for upgrade in (False, True):
+    headers = {'X-Forwarded-For': '172.30.32.2', 'X-Real-IP': '172.30.32.2'}
+    if upgrade:
+        headers.update({'Connection': 'Upgrade', 'Upgrade': 'websocket',
+                        'Sec-WebSocket-Version': '13',
+                        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ=='})
+    connection = http.client.HTTPConnection('127.0.0.1', 7681, timeout=2)
+    try:
+        connection.request('GET', '/ws' if upgrade else '/', headers=headers)
+        response = connection.getresponse()
+        assert response.status == 403, 'Direct ingress access must be denied'
+        response.read()
+    finally:
+        connection.close()
+print(json.dumps({'terminal_loopback_only': True, 'direct_ingress_denied': True}))
+'''
 
 
 def docker(*arguments, timeout=30, check=True, input_text=None):
@@ -143,6 +187,7 @@ def verify(container):
     assert status["HostConfig"]["NetworkMode"] == "none"
     assert not status["HostConfig"]["PortBindings"], "Unexpected published port"
     assert not any((status["NetworkSettings"].get("Ports") or {}).values())
+    ingress = json.loads(inside(container, "/opt/ha-mcp/bin/python", "-c", INGRESS_PROBE).stdout)
 
     private = private_files(container)
     document = tomllib.loads(private["configuration"])
@@ -175,6 +220,7 @@ def verify(container):
         "cli_mcp_transport": connection["transport"]["type"],
         "published_ports": 0,
         "unrelated_mcp_preserved": True,
+        **ingress,
     }
 
 

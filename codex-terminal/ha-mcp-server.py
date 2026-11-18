@@ -56,7 +56,9 @@ async def serve():
         return JSONResponse(HEALTH_BODY)
 
     app = server.mcp.http_app(
-        transport="streamable-http", path=MCP_PATH, stateless_http=False
+        transport="streamable-http", path=MCP_PATH, stateless_http=False,
+        # Loopback binding alone does not stop browser DNS rebinding requests.
+        host_origin_protection=True,
     )
     mcp_lifespan = app.router.lifespan_context
 

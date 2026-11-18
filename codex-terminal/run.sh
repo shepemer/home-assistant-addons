@@ -655,9 +655,10 @@ if ! configure_remote_control; then
 fi
 configure_tmux_session
 
-bashio::log.info "Starting web terminal on port 7681"
+bashio::log.info "Starting web terminal behind the Home Assistant ingress proxy"
 exec ttyd \
-    --port 7681 \
+    --interface 127.0.0.1 \
+    --port 7682 \
     --writable \
     --max-clients 5 \
     tmux attach-session -t "${SESSION_NAME}"

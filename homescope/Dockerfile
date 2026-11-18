@@ -1,4 +1,4 @@
-FROM ghcr.io/home-assistant/base:3.21 AS builder
+FROM ghcr.io/home-assistant/base:3.24 AS builder
 
 ARG BUILD_VERSION
 ARG BUILD_ARCH
@@ -26,7 +26,7 @@ COPY vite.config.ts ./
 
 RUN npm run build && npm prune --omit=dev
 
-FROM ghcr.io/home-assistant/base:3.21
+FROM ghcr.io/home-assistant/base:3.24
 
 ARG BUILD_VERSION
 ARG BUILD_ARCH

@@ -1,10 +1,10 @@
 import express from "express";
-import cors from "cors";
 import morgan from "morgan";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ZodError } from "zod";
 import { configValidationError, loadRuntimeConfig, redactConfig } from "./config.js";
+import { requireIngress, requireLocalAccess } from "./ingress.js";
 import {
   discoverSignals,
   parseQueryBody,
@@ -17,6 +17,8 @@ import sampleSeries from "../../frontend/src/fixtures/timeseries.json" with { ty
 const app = express();
 const port = Number(process.env.PORT ?? 8099);
 const isProduction = process.env.NODE_ENV === "production";
+const ingressOnly = process.env.HOMESCOPE_INGRESS === "1";
+const host = ingressOnly ? "0.0.0.0" : "127.0.0.1";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixtureSeries = sampleSeries.signals as Record<string, number[]>;
 const fixtureSignals = sampleSignals.map((signal) => ({
@@ -32,7 +34,7 @@ const fixtureSignals = sampleSignals.map((signal) => ({
   group: signal.group
 }));
 
-app.use(cors());
+app.use(ingressOnly ? requireIngress : requireLocalAccess);
 app.use(express.json());
 app.use(morgan(isProduction ? ":remote-addr :method :url :status :res[content-length] - :response-time ms" : "dev"));
 
@@ -42,7 +44,7 @@ function getConfig() {
 
 function errorMessage(error: unknown) {
   if (error instanceof ZodError) {
-    return error.errors.map((issue) => issue.message).join(", ");
+    return error.issues.map((issue) => issue.message).join(", ");
   }
 
   return error instanceof Error ? error.message : "Unexpected server error";
@@ -145,6 +147,6 @@ if (isProduction) {
   });
 }
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`HomeScope listening on http://0.0.0.0:${port}`);
+app.listen(port, host, () => {
+  console.log(`HomeScope listening on http://${host}:${port}`);
 });

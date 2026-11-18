@@ -1,8 +1,14 @@
-# Keep the existing HA tool implementation; pin the compatible FastMCP 2 API.
-# Compile a universal, hashed lock for Python 3.12 (Alpine 3.21) with:
-# uv pip compile --python-version 3.12 --universal --generate-hashes \
+# Keep the HA tool implementation and its compatible FastMCP API pinned.
+# Compile a universal, hashed lock for Python 3.14 (Alpine 3.24) with:
+# uv pip compile --python-version 3.14 --universal --generate-hashes \
 #   ha-mcp-requirements.in -o ha-mcp-requirements.txt
-ha-mcp==3.5.1
-fastmcp==2.14.7
+ha-mcp==8.5.0
+fastmcp==3.4.10
 mcp==1.30.0
 tomlkit==0.13.3
+# Keep transitive security fixes when regenerating the lock.
+authlib>=1.9.1
+certifi>=2026.10.18
+cryptography>=50.0.0
+joserfc>=1.7.6
+opentelemetry-api>=1.45.2

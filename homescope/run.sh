@@ -4,6 +4,7 @@ set -e
 
 export NODE_ENV=production
 export PORT=8099
+export HOMESCOPE_INGRESS=1
 export ADDON_OPTIONS_PATH=/data/options.json
 
 bashio::log.info "Starting HomeScope on port ${PORT}"
