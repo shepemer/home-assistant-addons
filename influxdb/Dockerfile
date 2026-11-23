@@ -1,4 +1,4 @@
-FROM influxdb:1.13.1@sha256:33fa5b045658ddd676f3f9a72c1f40eb92ad1582539a691cd36e578ce0a6f751
+FROM influxdb:1.13.2@sha256:ffa96366d916545608b8ae8dcc09d1efb5d792e4139096dfdcb1daf8789b211a
 
 USER root
 
